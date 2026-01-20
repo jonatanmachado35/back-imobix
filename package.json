@@ -11,6 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "deploy:migrations": "npx prisma migrate deploy",
     "test": "jest --config jest.config.js",
     "test:e2e": "prisma migrate deploy && jest --config test/jest-e2e.json",
     "build:seed": "tsc prisma/seed.ts --outDir dist/prisma --skipLibCheck --module commonjs --target ES2021 --esModuleInterop"
