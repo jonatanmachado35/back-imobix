@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StatusFuncionario {
+  ATIVO
+  INATIVO
+}
+
+enum LeadStatus {
+  NOVO
+  CONTATADO
+  QUALIFICADO
+  CONVERTIDO
+  PERDIDO
+}
+
+enum TipoPropriedade {
+  CASA_PRAIA
+  APARTAMENTO_PRAIA
+  SITIO
+  CHACARA
+  CASA_CAMPO
+  COBERTURA
+  OUTRO
+}
+
+enum StatusPropriedade {
+  AGUARDANDO_APROVACAO
+  ATIVO
+  INATIVO
+  REJEITADO
+}
+
+enum CategoriaTransacao {
+  RESERVA
+  COMISSAO_CORRETOR
+  PAGAMENTO_PROPRIETARIO
+  TAXA_PLATAFORMA
+  CANCELAMENTO
+  TAXA_LIMPEZA
+  TAXA_SERVICO
+  OUTRO
+}
+
+enum TipoTransacao {
+  ENTRADA
+  SAIDA
+}
+
+enum StatusTransacao {
+  PAGO
+  PENDENTE
+  CANCELADO
+  PROCESSANDO
+}
+
+enum StatusReserva {
+  CONFIRMADA
+  PENDENTE
+  CANCELADA
+}
+
+enum StatusVisita {
+  AGENDADA
+  REALIZADA
+  CANCELADA
+}
+
+model User {
+  id           String   @id @default(cuid())
+  nome         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  avatar       String?
+  refreshToken String?
+  
+  // Relations
+  funcionario Funcionario?
+  corretor    Corretor?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Funcionario {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  
+  cpf          String?
+  telefone     String?
+  status       StatusFuncionario @default(ATIVO)
+  dataCadastro DateTime @default(now())
+}
+
+model Corretor {
+  id            String   @id @default(cuid())
+  userId        String?  @unique // Optional link to a User login
+  user          User?    @relation(fields: [userId], references: [id])
+  
+  nome          String // Name might be duplicated from User if linked, but independent corretores might exist without login initially? Guide suggests Endpoints for Corretores.
+  creci         String?
+  totalVendas   Int?     @default(0)
+  especialidade String?
+  comissaoTotal Decimal? @default(0.0) @db.Decimal(10, 2)
+  
+  // Relations
+  transacoes    Transacao[]
+  visitas       Visita[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Lead {
+  id          String     @id @default(cuid())
+  nome        String
+  email       String
+  telefone    String?
+  origem      String?
+  interesse   String?
+  status      LeadStatus @default(NOVO)
+  dataContato DateTime   @default(now())
+  anotacoes   String?    @db.Text
+
+  updatedAt   DateTime   @updatedAt
+}
+
+model PropriedadeTemporada {
+  id                 String            @id @default(cuid())
+  titulo             String
+  tipo               TipoPropriedade
+  endereco           String
+  cidade             String
+  estado             String
+  valorDiaria        Decimal           @db.Decimal(10, 2)
+  valorDiariaFimSemana Decimal         @db.Decimal(10, 2)
+  status             StatusPropriedade @default(AGUARDANDO_APROVACAO)
+  proprietario       String?           // Nome ou ID externo
+  capacidadeHospedes Int
+  quartos            Int
+  camas              Int
+  banheiros          Int
+  areaTotal          Float?
+  minimoNoites       Int               @default(1)
+  dataEnvio          DateTime          @default(now())
+  imagens            String[]
+  
+  // Relations
+  transacoes         Transacao[]
+  reservas           Reserva[]
+  visitas            Visita[]
+
+  updatedAt          DateTime          @updatedAt
+}
+
+model Transacao {
+  id               String             @id @default(cuid())
+  descricao        String
+  categoria        CategoriaTransacao
+  tipo             TipoTransacao
+  valor            Decimal            @db.Decimal(10, 2)
+  status           StatusTransacao    @default(PENDENTE)
+  data             DateTime           @default(now())
+  dataVencimento   DateTime?
+  metodoPagamento  String?
+  
+  propriedadeId    String?
+  propriedade      PropriedadeTemporada? @relation(fields: [propriedadeId], references: [id])
+  
+  corretorId       String?
+  corretor         Corretor?           @relation(fields: [corretorId], references: [id])
+  
+  hospedeId        String?             // Can be a link to User or just a string ID for now
+}
+
+model Reserva {
+  id            String        @id @default(cuid())
+  propriedadeId String
+  propriedade   PropriedadeTemporada @relation(fields: [propriedadeId], references: [id])
+  
+  hospede       String        // Nome do hospede
+  checkIn       DateTime
+  checkOut      DateTime
+  valorTotal    Decimal       @db.Decimal(10, 2)
+  status        StatusReserva @default(PENDENTE)
+}
+
+model Visita {
+  id            String        @id @default(cuid())
+  propriedadeId String
+  propriedade   PropriedadeTemporada @relation(fields: [propriedadeId], references: [id])
+  
+  corretorId    String
+  corretor      Corretor      @relation(fields: [corretorId], references: [id])
+  
+  cliente       String
+  data          DateTime
+  status        StatusVisita  @default(AGENDADA)
+}
