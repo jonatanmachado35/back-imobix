@@ -1,40 +1,35 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../infrastructure/database/prisma.service';
-import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { LoginUseCase } from '../application/use-cases/login.use-case';
+import { InvalidCredentialsError } from '../application/use-cases/login.use-case';
+import { PrismaService } from '../infrastructure/database/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) { }
-
-  async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-
-    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
-      const { passwordHash, ...result } = user;
-      return result;
-    }
-    return null;
-  }
+    private readonly loginUseCase: LoginUseCase,
+    private readonly prisma: PrismaService
+  ) {}
 
   async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    try {
+      const result = await this.loginUseCase.execute({
+        email: loginDto.email,
+        password: loginDto.password
+      });
 
-    const payload = { email: user.email, sub: user.id, role: user.role };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user,
-    };
+      return {
+        access_token: result.accessToken,
+        user: result.user
+      };
+    } catch (error) {
+      if (error instanceof InvalidCredentialsError) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      throw error;
+    }
   }
 
-  // Placeholder for Me endpoint logic if needed separately
   async getProfile(userId: string) {
     return this.prisma.user.findUnique({ where: { id: userId } });
   }

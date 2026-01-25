@@ -10,4 +10,8 @@ export class BcryptHasher implements PasswordHasher {
     const safeRounds = Number.isFinite(rounds) ? rounds : 10;
     return bcrypt.hash(plain, safeRounds);
   }
+
+  async compare(plain: string, hashed: string): Promise<boolean> {
+    return bcrypt.compare(plain, hashed);
+  }
 }

@@ -1,10 +1,8 @@
 import { User } from '../../domain/entities/user';
 import { PasswordHasher } from '../ports/password-hasher';
 import { UserRepository } from '../ports/user-repository';
-import {
-  CreateUserUseCase,
-  EmailAlreadyExistsError
-} from './create-user.use-case';
+import { CreateUserUseCase } from './create-user.use-case';
+import { EmailAlreadyExistsError } from './user-errors';
 
 class InMemoryUserRepository implements UserRepository {
   private items: User[] = [];
@@ -15,11 +13,11 @@ class InMemoryUserRepository implements UserRepository {
     return found ?? null;
   }
 
-  async create(data: { name: string; email: string; passwordHash: string }): Promise<User> {
+  async create(data: { nome: string; email: string; passwordHash: string }): Promise<User> {
     const now = new Date();
     const user = new User(
       String(this.counter++),
-      data.name,
+      data.nome,
       data.email,
       data.passwordHash,
       now,
@@ -34,6 +32,10 @@ class FakeHasher implements PasswordHasher {
   async hash(plain: string): Promise<string> {
     return `hashed-${plain}`;
   }
+
+  async compare(plain: string, hashed: string): Promise<boolean> {
+    return hashed === `hashed-${plain}`;
+  }
 }
 
 describe('CreateUserUseCase', () => {
@@ -43,7 +45,7 @@ describe('CreateUserUseCase', () => {
     const useCase = new CreateUserUseCase(users, hasher);
 
     const user = await useCase.execute({
-      name: 'Ana',
+      nome: 'Ana',
       email: 'ana@example.com',
       password: 'password123'
     });
@@ -58,14 +60,14 @@ describe('CreateUserUseCase', () => {
     const useCase = new CreateUserUseCase(users, hasher);
 
     await useCase.execute({
-      name: 'Ana',
+      nome: 'Ana',
       email: 'ana@example.com',
       password: 'password123'
     });
 
     await expect(
       useCase.execute({
-        name: 'Ana 2',
+        nome: 'Ana 2',
         email: 'ana@example.com',
         password: 'password123'
       })

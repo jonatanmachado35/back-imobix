@@ -30,14 +30,14 @@ describe('Users (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/users')
       .send({
-        name: 'Ana',
+        nome: 'Ana',
         email: 'ana@example.com',
         password: 'password123'
       })
       .expect(201);
 
     expect(response.body).toMatchObject({
-      name: 'Ana',
+      nome: 'Ana',
       email: 'ana@example.com'
     });
     expect(response.body.id).toBeDefined();
@@ -45,7 +45,7 @@ describe('Users (e2e)', () => {
 
   it('POST /users rejects duplicate email', async () => {
     await request(app.getHttpServer()).post('/users').send({
-      name: 'Ana',
+      nome: 'Ana',
       email: 'ana@example.com',
       password: 'password123'
     });
@@ -53,7 +53,7 @@ describe('Users (e2e)', () => {
     await request(app.getHttpServer())
       .post('/users')
       .send({
-        name: 'Ana 2',
+        nome: 'Ana 2',
         email: 'ana@example.com',
         password: 'password123'
       })

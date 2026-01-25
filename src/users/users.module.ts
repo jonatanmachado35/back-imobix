@@ -20,6 +20,7 @@ import { PASSWORD_HASHER, USER_REPOSITORY } from './users.tokens';
         new CreateUserUseCase(users, hasher),
       inject: [USER_REPOSITORY, PASSWORD_HASHER]
     }
-  ]
+  ],
+  exports: [USER_REPOSITORY, PASSWORD_HASHER]
 })
 export class UsersModule {}

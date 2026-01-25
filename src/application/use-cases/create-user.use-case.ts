@@ -1,15 +1,10 @@
 import { User } from '../../domain/entities/user';
 import { PasswordHasher } from '../ports/password-hasher';
 import { CreateUserData, UserRepository } from '../ports/user-repository';
-
-export class EmailAlreadyExistsError extends Error {
-  constructor(email: string) {
-    super(`Email already exists: ${email}`);
-  }
-}
+import { EmailAlreadyExistsError } from './user-errors';
 
 export type CreateUserInput = {
-  name: string;
+  nome: string;
   email: string;
   password: string;
 };
@@ -29,7 +24,7 @@ export class CreateUserUseCase {
     const passwordHash = await this.hasher.hash(input.password);
 
     const data: CreateUserData = {
-      nome: input.name,
+      nome: input.nome,
       email: input.email,
       passwordHash
     };
