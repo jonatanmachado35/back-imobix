@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@ne
 import { PeopleService } from './people.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
-import { FuncionarioResponseDto } from './dto/funcionario-response.dto';
+import { FuncionarioResponseDto, FuncionarioApiResponseDto } from './dto/funcionario-response.dto';
 
 @ApiTags('Funcionários')
 @ApiBearerAuth()
@@ -32,9 +32,10 @@ export class FuncionariosController {
 
   @Post()
   @ApiOperation({ summary: 'Criar novo funcionário', description: 'Registra um novo funcionário no sistema' })
-  @ApiResponse({ status: 201, description: 'Funcionário criado com sucesso', type: FuncionarioResponseDto })
+  @ApiResponse({ status: 201, description: 'Funcionário criado com sucesso', type: FuncionarioApiResponseDto })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 409, description: 'Email já cadastrado' })
   create(@Body() createFuncionarioDto: CreateFuncionarioDto) {
     return this.peopleService.createFuncionario(createFuncionarioDto);
   }
