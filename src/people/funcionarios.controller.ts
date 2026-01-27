@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { PeopleService } from './people.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,8 +26,14 @@ export class FuncionariosController {
   @ApiResponse({ status: 200, description: 'Funcionário encontrado', type: FuncionarioResponseDto })
   @ApiResponse({ status: 404, description: 'Funcionário não encontrado' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findOne(@Param('id') id: string) {
-    return this.peopleService.findFuncionario(id);
+  async findOne(@Param('id') id: string) {
+    const funcionario = await this.peopleService.findFuncionario(id);
+    
+    if (!funcionario) {
+      throw new NotFoundException('Funcionário não encontrado');
+    }
+    
+    return funcionario;
   }
 
   @Post()

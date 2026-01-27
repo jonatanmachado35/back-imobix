@@ -13,11 +13,46 @@ export class PeopleService {
 
   // Funcionarios
   async findAllFuncionarios() {
-    return this.prisma.funcionario.findMany({ include: { user: true } });
+    const funcionarios = await this.prisma.funcionario.findMany({ 
+      include: { user: true } 
+    });
+
+    return funcionarios.map(funcionario => ({
+      id: funcionario.id,
+      nome: funcionario.user.nome,
+      email: funcionario.user.email,
+      cpf: funcionario.cpf,
+      telefone: funcionario.telefone,
+      role: funcionario.user.role,
+      status: funcionario.status,
+      dataCadastro: funcionario.dataCadastro,
+      endereco: null,
+      departamento: null
+    }));
   }
 
   async findFuncionario(id: string) {
-    return this.prisma.funcionario.findUnique({ where: { id }, include: { user: true } });
+    const funcionario = await this.prisma.funcionario.findUnique({ 
+      where: { id }, 
+      include: { user: true } 
+    });
+
+    if (!funcionario) {
+      return null;
+    }
+
+    return {
+      id: funcionario.id,
+      nome: funcionario.user.nome,
+      email: funcionario.user.email,
+      cpf: funcionario.cpf,
+      telefone: funcionario.telefone,
+      role: funcionario.user.role,
+      status: funcionario.status,
+      dataCadastro: funcionario.dataCadastro,
+      endereco: null,
+      departamento: null
+    };
   }
 
   async createFuncionario(data: { 
