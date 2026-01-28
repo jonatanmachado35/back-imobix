@@ -15,6 +15,7 @@ export class PrismaUserRepository implements UserRepository {
         user.nome,
         user.email,
         user.passwordHash,
+        user.role,
         user.createdAt,
         user.updatedAt
       )
@@ -28,6 +29,7 @@ export class PrismaUserRepository implements UserRepository {
       user.nome,
       user.email,
       user.passwordHash,
+      user.role,
       user.createdAt,
       user.updatedAt
     );

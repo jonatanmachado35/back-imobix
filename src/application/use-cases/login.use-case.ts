@@ -51,7 +51,7 @@ export class LoginUseCase {
     const accessToken = this.tokenGenerator.generate({
       userId: user.id,
       email: user.email,
-      role: 'USER' // This should come from user entity when role is added
+      role: user.role
     });
 
     return {
@@ -60,7 +60,7 @@ export class LoginUseCase {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        role: 'USER'
+        role: user.role
       }
     };
   }
