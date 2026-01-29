@@ -8,6 +8,8 @@ import { CreateLeadUseCase } from '../application/use-cases/create-lead.use-case
 import { QualifyLeadUseCase } from '../application/use-cases/qualify-lead.use-case';
 import { UpdateLeadUseCase } from '../application/use-cases/update-lead.use-case';
 import { ConvertLeadUseCase } from '../application/use-cases/convert-lead.use-case';
+import { ContactLeadUseCase } from '../application/use-cases/contact-lead.use-case';
+import { LostLeadUseCase } from '../application/use-cases/lost-lead.use-case';
 import { GetLeadByIdUseCase } from '../application/use-cases/get-lead-by-id.use-case';
 import { ListLeadsUseCase } from '../application/use-cases/list-leads.use-case';
 import { LEAD_REPOSITORY } from './crm.tokens';
@@ -40,6 +42,18 @@ import { LEAD_REPOSITORY } from './crm.tokens';
       provide: ConvertLeadUseCase,
       useFactory: (leadRepository: LeadRepository) =>
         new ConvertLeadUseCase(leadRepository),
+      inject: [LEAD_REPOSITORY]
+    },
+    {
+      provide: ContactLeadUseCase,
+      useFactory: (leadRepository: LeadRepository) =>
+        new ContactLeadUseCase(leadRepository),
+      inject: [LEAD_REPOSITORY]
+    },
+    {
+      provide: LostLeadUseCase,
+      useFactory: (leadRepository: LeadRepository) =>
+        new LostLeadUseCase(leadRepository),
       inject: [LEAD_REPOSITORY]
     },
     {

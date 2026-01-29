@@ -15,6 +15,8 @@ import { CreateLeadUseCase } from '../../application/use-cases/create-lead.use-c
 import { QualifyLeadUseCase } from '../../application/use-cases/qualify-lead.use-case';
 import { UpdateLeadUseCase } from '../../application/use-cases/update-lead.use-case';
 import { ConvertLeadUseCase } from '../../application/use-cases/convert-lead.use-case';
+import { ContactLeadUseCase } from '../../application/use-cases/contact-lead.use-case';
+import { LostLeadUseCase } from '../../application/use-cases/lost-lead.use-case';
 import { GetLeadByIdUseCase } from '../../application/use-cases/get-lead-by-id.use-case';
 import { ListLeadsUseCase } from '../../application/use-cases/list-leads.use-case';
 import {
@@ -34,6 +36,8 @@ export class LeadsController {
     private readonly qualifyLead: QualifyLeadUseCase,
     private readonly updateLead: UpdateLeadUseCase,
     private readonly convertLead: ConvertLeadUseCase,
+    private readonly contactLead: ContactLeadUseCase,
+    private readonly lostLead: LostLeadUseCase,
     private readonly getLeadById: GetLeadByIdUseCase,
     private readonly listLeads: ListLeadsUseCase
   ) {}
@@ -171,6 +175,48 @@ export class LeadsController {
   async convert(@Param('id') id: string) {
     try {
       const lead = await this.convertLead.execute(id);
+      return {
+        id: lead.id,
+        status: lead.status,
+        updatedAt: lead.updatedAt
+      };
+    } catch (error) {
+      if (error instanceof LeadNotFoundError) {
+        throw new NotFoundException('Lead not found');
+      }
+      throw error;
+    }
+  }
+
+  @Patch(':id/contact')
+  @ApiOperation({ summary: 'Marcar lead como contatado', description: 'Marca o lead como contatado (NOVO → CONTATADO)' })
+  @ApiParam({ name: 'id', description: 'ID do lead' })
+  @ApiResponse({ status: 200, description: 'Lead marcado como contatado com sucesso', type: LeadStatusResponseDto })
+  @ApiResponse({ status: 404, description: 'Lead não encontrado' })
+  async contact(@Param('id') id: string) {
+    try {
+      const lead = await this.contactLead.execute(id);
+      return {
+        id: lead.id,
+        status: lead.status,
+        updatedAt: lead.updatedAt
+      };
+    } catch (error) {
+      if (error instanceof LeadNotFoundError) {
+        throw new NotFoundException('Lead not found');
+      }
+      throw error;
+    }
+  }
+
+  @Patch(':id/lost')
+  @ApiOperation({ summary: 'Marcar lead como perdido', description: 'Marca o lead como perdido (qualquer status → PERDIDO)' })
+  @ApiParam({ name: 'id', description: 'ID do lead' })
+  @ApiResponse({ status: 200, description: 'Lead marcado como perdido com sucesso', type: LeadStatusResponseDto })
+  @ApiResponse({ status: 404, description: 'Lead não encontrado' })
+  async lost(@Param('id') id: string) {
+    try {
+      const lead = await this.lostLead.execute(id);
       return {
         id: lead.id,
         status: lead.status,
