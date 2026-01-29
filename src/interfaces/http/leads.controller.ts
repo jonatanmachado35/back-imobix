@@ -32,6 +32,16 @@ import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadResponseDto, LeadListResponseDto, LeadStatusResponseDto, ImportLeadsResponseDto } from './dto/lead-response.dto';
 
+// Interface local para evitar problemas com tipos globais do Express.Multer
+interface UploadedFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
 @ApiTags('Leads')
 @Controller('leads')
 export class LeadsController {
@@ -99,7 +109,7 @@ export class LeadsController {
   @ApiResponse({ status: 201, description: 'Importação concluída com sucesso', type: ImportLeadsResponseDto })
   @ApiResponse({ status: 400, description: 'Arquivo inválido ou formato incorreto' })
   @UseInterceptors(FileInterceptor('file'))
-  async importCsv(@UploadedFile() file?: Express.Multer.File) {
+  async importCsv(@UploadedFile() file?: UploadedFile) {
     if (!file) {
       throw new BadRequestException('Arquivo CSV é obrigatório');
     }

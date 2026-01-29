@@ -1,8 +1,10 @@
-import * as csvParse from 'csv-parse';
 import { Readable } from 'stream';
 import { Lead, LeadStatus, InvalidLeadDataError } from '../../domain/entities/lead';
 import { LeadRepository } from '../ports/lead-repository';
 import { LeadAlreadyExistsError } from './lead-errors';
+
+// Importação dinâmica para evitar problemas de resolução de tipos em build
+const csvParse = require('csv-parse');
 
 export type ImportedLeadData = {
   nome: string;
