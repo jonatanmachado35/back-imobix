@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { StatusPropriedade } from '@prisma/client';
 
 export class AnuncioResponseDto {
   @ApiProperty({ description: 'ID do anúncio', example: 'clxyz123456789' })
@@ -74,8 +76,10 @@ export class AnuncioResponseDto {
 export class UpdateAnuncioStatusDto {
   @ApiProperty({ 
     description: 'Novo status do anúncio', 
-    enum: ['AGUARDANDO_APROVACAO', 'ATIVO', 'INATIVO', 'REJEITADO'],
+    enum: StatusPropriedade,
     example: 'ATIVO'
   })
-  status: string;
+  @IsNotEmpty({ message: 'Status é obrigatório' })
+  @IsEnum(StatusPropriedade, { message: 'Status inválido. Use: AGUARDANDO_APROVACAO, ATIVO, INATIVO ou REJEITADO' })
+  status: StatusPropriedade;
 }
