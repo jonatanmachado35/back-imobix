@@ -3,8 +3,8 @@ import { Lead, LeadStatus, InvalidLeadDataError } from '../../domain/entities/le
 import { LeadRepository } from '../ports/lead-repository';
 import { LeadAlreadyExistsError } from './lead-errors';
 
-// Importação dinâmica para evitar problemas de resolução de tipos em build
-const csvParse = require('csv-parse');
+// Import do parser de CSV
+const { parse: createCsvParser } = require('csv-parse');
 
 export type ImportedLeadData = {
   nome: string;
@@ -67,7 +67,7 @@ export class ImportLeadsFromCsvUseCase {
       const records: ImportedLeadData[] = [];
       const stream = Readable.from(buffer);
 
-      const parser = csvParse.parse({
+      const parser = createCsvParser({
         columns: true,
         skip_empty_lines: true,
         trim: true,
