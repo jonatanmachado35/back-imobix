@@ -8,6 +8,7 @@
     "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "start:prod": "sh start-prod.sh",
     "build": "tsc -p tsconfig.build.json && npm run build:seed",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",

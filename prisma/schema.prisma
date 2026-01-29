@@ -79,6 +79,13 @@ enum StatusVisita {
   CANCELADA
 }
 
+enum Sexo {
+  MASCULINO
+  FEMININO
+  OUTRO
+  PREFIRO_NAO_INFORMAR
+}
+
 model User {
   id           String   @id @default(cuid())
   nome         String
@@ -112,8 +119,13 @@ model Corretor {
   userId        String?  @unique // Optional link to a User login
   user          User?    @relation(fields: [userId], references: [id])
   
-  nome          String // Name might be duplicated from User if linked, but independent corretores might exist without login initially? Guide suggests Endpoints for Corretores.
+  nome          String
   creci         String?
+  cpf           String?
+  rg            String?
+  telefone      String?
+  sexo          Sexo?
+  endereco      String?
   totalVendas   Int?     @default(0)
   especialidade String?
   comissaoTotal Decimal? @default(0.0) @db.Decimal(10, 2)
