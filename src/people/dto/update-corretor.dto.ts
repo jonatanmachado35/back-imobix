@@ -42,6 +42,21 @@ export class UpdateCorretorDto {
   @IsString()
   endereco?: string;
 
+  @ApiProperty({ description: 'Cidade do corretor', example: 'São Paulo', required: false })
+  @IsOptional()
+  @IsString()
+  cidade?: string;
+
+  @ApiProperty({ description: 'Estado do corretor', example: 'SP', required: false })
+  @IsOptional()
+  @IsString()
+  estado?: string;
+
+  @ApiProperty({ description: 'CEP do corretor', example: '01234-567', required: false })
+  @IsOptional()
+  @IsString()
+  cep?: string;
+
   @ApiProperty({ description: 'Especialidade do corretor', example: 'Imóveis de alto padrão', required: false })
   @IsOptional()
   @IsString()

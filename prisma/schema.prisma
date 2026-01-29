@@ -126,6 +126,9 @@ model Corretor {
   telefone      String?
   sexo          Sexo?
   endereco      String?
+  cidade        String?
+  estado        String?
+  cep           String?
   totalVendas   Int?     @default(0)
   especialidade String?
   comissaoTotal Decimal? @default(0.0) @db.Decimal(10, 2)
