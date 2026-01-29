@@ -25,6 +25,11 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Perfil retornado com sucesso', type: UserProfileResponseDto })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   getProfile(@Request() req) {
-    return req.user;
+    // O JWT já contém as informações do usuário via JwtStrategy
+    return {
+      id: req.user.userId,
+      email: req.user.email,
+      role: req.user.role
+    };
   }
 }

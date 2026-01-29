@@ -5,7 +5,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { DatabaseModule } from '../infrastructure/database/database.module';
-import { PrismaService } from '../infrastructure/database/prisma.service';
 import { JwtTokenGenerator } from '../infrastructure/security/jwt-token-generator.service';
 import { UserRepository } from '../application/ports/user-repository';
 import { PasswordHasher } from '../application/ports/password-hasher';
@@ -28,7 +27,6 @@ import { UsersModule } from '../users/users.module';
   ],
   controllers: [AuthController],
   providers: [
-    PrismaService,
     { provide: TOKEN_GENERATOR, useClass: JwtTokenGenerator },
     {
       provide: LoginUseCase,

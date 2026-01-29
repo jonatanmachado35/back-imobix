@@ -2,13 +2,11 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { LoginUseCase } from '../application/use-cases/login.use-case';
 import { InvalidCredentialsError } from '../application/use-cases/login.use-case';
-import { PrismaService } from '../infrastructure/database/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly loginUseCase: LoginUseCase,
-    private readonly prisma: PrismaService
+    private readonly loginUseCase: LoginUseCase
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -28,9 +26,5 @@ export class AuthService {
       }
       throw error;
     }
-  }
-
-  async getProfile(userId: string) {
-    return this.prisma.user.findUnique({ where: { id: userId } });
   }
 }
