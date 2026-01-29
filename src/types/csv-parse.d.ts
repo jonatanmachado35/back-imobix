@@ -1,6 +1,4 @@
-declare module 'csv-parse' {
-  import { Transform } from 'stream';
-
+declare module 'csv-parse/sync' {
   export interface Options {
     columns?: boolean | string[];
     skip_empty_lines?: boolean;
@@ -9,5 +7,5 @@ declare module 'csv-parse' {
     relax_column_count?: boolean;
   }
 
-  export function parse(options?: Options): Transform;
+  export function parse(input: Buffer | string, options?: Options): any[];
 }

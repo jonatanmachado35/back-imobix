@@ -1,5 +1,4 @@
-import { Readable } from 'stream';
-import { parse } from 'csv-parse';
+import { parse } from 'csv-parse/sync';
 import { Lead, LeadStatus, InvalidLeadDataError } from '../../domain/entities/lead';
 import { LeadRepository } from '../ports/lead-repository';
 import { LeadAlreadyExistsError } from './lead-errors';
@@ -61,36 +60,21 @@ export class ImportLeadsFromCsvUseCase {
   }
 
   private async parseCsv(buffer: Buffer): Promise<ImportedLeadData[]> {
-    return new Promise((resolve, reject) => {
-      const records: ImportedLeadData[] = [];
-      const stream = Readable.from(buffer);
-
-      const parser = parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true,
-        delimiter: [',', ';'], // Aceita vírgula ou ponto-e-vírgula
-        relax_column_count: true
-      });
-
-      stream
-        .pipe(parser)
-        .on('data', (record) => {
-          records.push({
-            nome: record.nome || record.name || '',
-            email: record.email || '',
-            telefone: record.telefone || record.phone || record.telephone || null,
-            origem: record.origem || record.source || record.origin || null,
-            interesse: record.interesse || record.interest || null
-          });
-        })
-        .on('error', (error) => {
-          reject(new Error(`Erro ao processar CSV: ${error.message}`));
-        })
-        .on('end', () => {
-          resolve(records);
-        });
+    const records = parse(buffer, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+      delimiter: [',', ';'], // Aceita vírgula ou ponto-e-vírgula
+      relax_column_count: true
     });
+
+    return records.map((record: any) => ({
+      nome: record.nome || record.name || '',
+      email: record.email || '',
+      telefone: record.telefone || record.phone || record.telephone || null,
+      origem: record.origem || record.source || record.origin || null,
+      interesse: record.interesse || record.interest || null
+    }));
   }
 
   private async processRecord(data: ImportedLeadData): Promise<void> {
