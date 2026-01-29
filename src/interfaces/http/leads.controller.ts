@@ -99,7 +99,7 @@ export class LeadsController {
   @ApiResponse({ status: 201, description: 'Importação concluída com sucesso', type: ImportLeadsResponseDto })
   @ApiResponse({ status: 400, description: 'Arquivo inválido ou formato incorreto' })
   @UseInterceptors(FileInterceptor('file'))
-  async importCsv(@UploadedFile() file: Express.Multer.File | undefined) {
+  async importCsv(@UploadedFile() file?: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Arquivo CSV é obrigatório');
     }

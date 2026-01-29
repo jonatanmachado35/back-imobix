@@ -1,4 +1,4 @@
-import { parse } from 'csv-parse';
+import * as csvParse from 'csv-parse';
 import { Readable } from 'stream';
 import { Lead, LeadStatus, InvalidLeadDataError } from '../../domain/entities/lead';
 import { LeadRepository } from '../ports/lead-repository';
@@ -65,7 +65,7 @@ export class ImportLeadsFromCsvUseCase {
       const records: ImportedLeadData[] = [];
       const stream = Readable.from(buffer);
 
-      const parser = parse({
+      const parser = csvParse.parse({
         columns: true,
         skip_empty_lines: true,
         trim: true,
