@@ -12,6 +12,7 @@ import { ContactLeadUseCase } from '../application/use-cases/contact-lead.use-ca
 import { LostLeadUseCase } from '../application/use-cases/lost-lead.use-case';
 import { GetLeadByIdUseCase } from '../application/use-cases/get-lead-by-id.use-case';
 import { ListLeadsUseCase } from '../application/use-cases/list-leads.use-case';
+import { ImportLeadsFromCsvUseCase } from '../application/use-cases/import-leads-from-csv.use-case';
 import { LEAD_REPOSITORY } from './crm.tokens';
 
 @Module({
@@ -66,6 +67,12 @@ import { LEAD_REPOSITORY } from './crm.tokens';
       provide: ListLeadsUseCase,
       useFactory: (leadRepository: LeadRepository) =>
         new ListLeadsUseCase(leadRepository),
+      inject: [LEAD_REPOSITORY]
+    },
+    {
+      provide: ImportLeadsFromCsvUseCase,
+      useFactory: (leadRepository: LeadRepository) =>
+        new ImportLeadsFromCsvUseCase(leadRepository),
       inject: [LEAD_REPOSITORY]
     }
   ]

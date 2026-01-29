@@ -68,3 +68,31 @@ export class LeadListResponseDto {
   @ApiProperty({ description: 'Data do primeiro contato', example: '2026-01-25T18:00:00.000Z', required: false })
   dataContato?: Date;
 }
+
+export class ImportErrorDto {
+  @ApiProperty({ description: 'Número da linha no CSV onde ocorreu o erro', example: 3 })
+  row: number;
+
+  @ApiProperty({ description: 'Dados da linha que causou o erro', example: { nome: 'João Silva', email: 'joao@example.com' } })
+  data: Record<string, any>;
+
+  @ApiProperty({ description: 'Mensagem de erro descritiva', example: 'Email já cadastrado no sistema' })
+  error: string;
+}
+
+export class ImportLeadsResponseDto {
+  @ApiProperty({ description: 'Total de registros processados', example: 100 })
+  totalProcessed: number;
+
+  @ApiProperty({ description: 'Número de leads importados com sucesso', example: 95 })
+  successCount: number;
+
+  @ApiProperty({ description: 'Número de registros com erro', example: 5 })
+  errorCount: number;
+
+  @ApiProperty({ description: 'Lista detalhada de erros encontrados', type: [ImportErrorDto] })
+  errors: ImportErrorDto[];
+
+  @ApiProperty({ description: 'Mensagem de conclusão', example: 'Importação concluída: 95 leads cadastrados com sucesso, 5 erros encontrados.' })
+  message: string;
+}

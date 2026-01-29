@@ -8,9 +8,12 @@ import {
   Patch,
   Post,
   Put,
-  BadRequestException
+  BadRequestException,
+  UploadedFile,
+  UseInterceptors
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateLeadUseCase } from '../../application/use-cases/create-lead.use-case';
 import { QualifyLeadUseCase } from '../../application/use-cases/qualify-lead.use-case';
 import { UpdateLeadUseCase } from '../../application/use-cases/update-lead.use-case';
@@ -19,6 +22,7 @@ import { ContactLeadUseCase } from '../../application/use-cases/contact-lead.use
 import { LostLeadUseCase } from '../../application/use-cases/lost-lead.use-case';
 import { GetLeadByIdUseCase } from '../../application/use-cases/get-lead-by-id.use-case';
 import { ListLeadsUseCase } from '../../application/use-cases/list-leads.use-case';
+import { ImportLeadsFromCsvUseCase } from '../../application/use-cases/import-leads-from-csv.use-case';
 import {
   LeadAlreadyExistsError,
   LeadNotFoundError
@@ -26,7 +30,7 @@ import {
 import { InvalidLeadDataError } from '../../domain/entities/lead';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
-import { LeadResponseDto, LeadListResponseDto, LeadStatusResponseDto } from './dto/lead-response.dto';
+import { LeadResponseDto, LeadListResponseDto, LeadStatusResponseDto, ImportLeadsResponseDto } from './dto/lead-response.dto';
 
 @ApiTags('Leads')
 @Controller('leads')
@@ -39,7 +43,8 @@ export class LeadsController {
     private readonly contactLead: ContactLeadUseCase,
     private readonly lostLead: LostLeadUseCase,
     private readonly getLeadById: GetLeadByIdUseCase,
-    private readonly listLeads: ListLeadsUseCase
+    private readonly listLeads: ListLeadsUseCase,
+    private readonly importLeadsFromCsv: ImportLeadsFromCsvUseCase
   ) {}
 
   @Post()
@@ -67,6 +72,55 @@ export class LeadsController {
         throw new ConflictException('Email already exists');
       }
       if (error instanceof InvalidLeadDataError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  @Post('import')
+  @ApiOperation({ 
+    summary: 'Importar leads via CSV', 
+    description: 'Faz upload de um arquivo CSV para importação em massa de leads. O CSV deve conter as colunas: nome, email, telefone (opcional), origem (opcional), interesse (opcional)' 
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Arquivo CSV com os dados dos leads'
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 201, description: 'Importação concluída com sucesso', type: ImportLeadsResponseDto })
+  @ApiResponse({ status: 400, description: 'Arquivo inválido ou formato incorreto' })
+  @UseInterceptors(FileInterceptor('file'))
+  async importCsv(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Arquivo CSV é obrigatório');
+    }
+
+    if (!file.originalname.toLowerCase().endsWith('.csv')) {
+      throw new BadRequestException('Arquivo deve ser do tipo CSV');
+    }
+
+    try {
+      const result = await this.importLeadsFromCsv.execute(file.buffer);
+      
+      const message = result.errorCount === 0
+        ? `Importação concluída com sucesso! ${result.successCount} leads cadastrados.`
+        : `Importação concluída: ${result.successCount} leads cadastrados com sucesso, ${result.errorCount} erros encontrados.`;
+
+      return {
+        ...result,
+        message
+      };
+    } catch (error) {
+      if (error instanceof Error) {
         throw new BadRequestException(error.message);
       }
       throw error;
