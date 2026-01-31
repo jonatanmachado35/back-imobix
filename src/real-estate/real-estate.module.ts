@@ -2,10 +2,21 @@ import { Module } from '@nestjs/common';
 import { RealEstateService } from './real-estate.service';
 import { AnunciosController } from './anuncios.controller';
 import { DatabaseModule } from '../infrastructure/database/database.module';
+import { CloudinaryModule } from '../infrastructure/file-storage/cloudinary/cloudinary.module';
+import { UploadAnuncioImageUseCase } from '../application/use-cases/anuncio-images/upload-anuncio-image.use-case';
+import { DeleteAnuncioImageUseCase } from '../application/use-cases/anuncio-images/delete-anuncio-image.use-case';
+import { ListAnuncioImagesUseCase } from '../application/use-cases/anuncio-images/list-anuncio-images.use-case';
+import { SetPrimaryImageUseCase } from '../application/use-cases/anuncio-images/set-primary-image.use-case';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, CloudinaryModule],
   controllers: [AnunciosController],
-  providers: [RealEstateService],
+  providers: [
+    RealEstateService,
+    UploadAnuncioImageUseCase,
+    DeleteAnuncioImageUseCase,
+    ListAnuncioImagesUseCase,
+    SetPrimaryImageUseCase,
+  ],
 })
-export class RealEstateModule { }
+export class RealEstateModule {}

@@ -20,6 +20,7 @@ class InMemoryUserRepository implements UserRepository {
       data.nome,
       data.email,
       data.passwordHash,
+      'USER',
       now,
       now
     );

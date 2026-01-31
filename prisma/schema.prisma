@@ -227,3 +227,48 @@ model Visita {
   data          DateTime
   status        StatusVisita  @default(AGENDADA)
 }
+
+// Modelo para Anúncios (imobiliário geral)
+model Anuncio {
+  id              String           @id @default(cuid())
+  titulo          String
+  descricao       String?          @db.Text
+  tipo            String
+  endereco        String
+  cidade          String
+  estado          String
+  valor           Decimal          @db.Decimal(10, 2)
+  status          String           @default("ATIVO")
+  
+  // Relations
+  images          AnuncioImage[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@index([status])
+  @@index([cidade])
+}
+
+model AnuncioImage {
+  id            String   @id @default(cuid())
+  anuncioId     String
+  anuncio       Anuncio  @relation(fields: [anuncioId], references: [id], onDelete: Cascade)
+  
+  publicId      String   @unique  // Cloudinary public_id
+  url           String              // URL da imagem
+  secureUrl     String              // HTTPS URL
+  format        String              // jpg, png, etc
+  width         Int?
+  height        Int?
+  bytes         Int?
+  
+  displayOrder  Int      @default(0)  // Ordem de exibição
+  isPrimary     Boolean  @default(false)  // Imagem principal
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([anuncioId])
+  @@index([isPrimary])
+}

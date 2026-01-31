@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma.service';
 
@@ -19,6 +19,8 @@ describe('Users (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await prisma.funcionario.deleteMany();
+    await prisma.corretor.deleteMany();
     await prisma.user.deleteMany();
   });
 

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './auth/auth.module';
@@ -11,6 +12,10 @@ import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     DatabaseModule,
     UsersModule,
     AuthModule,
@@ -18,7 +23,7 @@ import { CalendarModule } from './calendar/calendar.module';
     CrmModule,
     RealEstateModule,
     FinanceModule,
-    CalendarModule
-  ]
+    CalendarModule,
+  ],
 })
-export class AppModule { }
+export class AppModule {}

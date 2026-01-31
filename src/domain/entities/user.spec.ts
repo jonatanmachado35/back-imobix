@@ -9,6 +9,7 @@ describe('User Entity', () => {
         'João Silva',
         'joao@example.com',
         'hashed-password',
+        'USER',
         now,
         now
       );
@@ -30,6 +31,7 @@ describe('User Entity', () => {
         'João Silva',
         'joao@example.com',
         'hashed-password',
+        'USER',
         now,
         now
       );

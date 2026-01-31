@@ -12,7 +12,9 @@ describe('LostLeadUseCase', () => {
       findById: jest.fn(),
       findByEmail: jest.fn(),
       save: jest.fn(),
-      findAll: jest.fn()
+      findAll: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     };
     useCase = new LostLeadUseCase(leadRepository);
   });
