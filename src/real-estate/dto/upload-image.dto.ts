@@ -35,9 +35,3 @@ export class ImageResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export class SetPrimaryImageDto {
-  @IsNotEmpty()
-  @IsString()
-  imageId: string;
-}

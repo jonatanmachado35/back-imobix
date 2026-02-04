@@ -7,6 +7,7 @@ import { UploadAnuncioImageUseCase } from '../application/use-cases/anuncio-imag
 import { DeleteAnuncioImageUseCase } from '../application/use-cases/anuncio-images/delete-anuncio-image.use-case';
 import { ListAnuncioImagesUseCase } from '../application/use-cases/anuncio-images/list-anuncio-images.use-case';
 import { SetPrimaryImageUseCase } from '../application/use-cases/anuncio-images/set-primary-image.use-case';
+import { CreateAnuncioWithImagesUseCase } from '../application/use-cases/anuncio-images/create-anuncio-with-images.use-case';
 
 @Module({
   imports: [DatabaseModule, CloudinaryModule],
@@ -17,6 +18,7 @@ import { SetPrimaryImageUseCase } from '../application/use-cases/anuncio-images/
     DeleteAnuncioImageUseCase,
     ListAnuncioImagesUseCase,
     SetPrimaryImageUseCase,
+    CreateAnuncioWithImagesUseCase,
   ],
 })
-export class RealEstateModule {}
+export class RealEstateModule { }

@@ -9,22 +9,24 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { RealEstateService } from './real-estate.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateAnuncioDto } from './dto/create-anuncio.dto';
 import { UpdateAnuncioDto } from './dto/update-anuncio.dto';
 import { AnuncioResponseDto, UpdateAnuncioStatusDto } from './dto/anuncio-response.dto';
-import { UploadImageDto, ImageResponseDto, SetPrimaryImageDto } from './dto/upload-image.dto';
+import { UploadImageDto, ImageResponseDto } from './dto/upload-image.dto';
 import { UploadAnuncioImageUseCase } from '../application/use-cases/anuncio-images/upload-anuncio-image.use-case';
 import { DeleteAnuncioImageUseCase } from '../application/use-cases/anuncio-images/delete-anuncio-image.use-case';
 import { ListAnuncioImagesUseCase } from '../application/use-cases/anuncio-images/list-anuncio-images.use-case';
 import { SetPrimaryImageUseCase } from '../application/use-cases/anuncio-images/set-primary-image.use-case';
+import { CreateAnuncioWithImagesUseCase } from '../application/use-cases/anuncio-images/create-anuncio-with-images.use-case';
 
 @ApiTags('Anúncios')
 @ApiBearerAuth()
@@ -37,7 +39,8 @@ export class AnunciosController {
     private readonly deleteImageUseCase: DeleteAnuncioImageUseCase,
     private readonly listImagesUseCase: ListAnuncioImagesUseCase,
     private readonly setPrimaryImageUseCase: SetPrimaryImageUseCase,
-  ) {}
+    private readonly createAnuncioWithImagesUseCase: CreateAnuncioWithImagesUseCase,
+  ) { }
 
   @Get()
   @ApiOperation({ summary: 'Listar anúncios', description: 'Retorna lista de todos os anúncios de imóveis' })
@@ -58,12 +61,57 @@ export class AnunciosController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Criar novo anúncio', description: 'Cadastra um novo anúncio de imóvel' })
+  @UseInterceptors(FilesInterceptor('images', 20))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Criar novo anúncio com imagens',
+    description: 'Cadastra um novo anúncio de imóvel com pelo menos 1 imagem (obrigatória)'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        titulo: { type: 'string', example: 'Casa na Praia' },
+        tipo: { type: 'string', example: 'CASA_PRAIA' },
+        endereco: { type: 'string', example: 'Rua da Praia, 123' },
+        cidade: { type: 'string', example: 'Florianópolis' },
+        estado: { type: 'string', example: 'SC' },
+        valor: { type: 'number', example: 500000 },
+        descricao: { type: 'string', example: 'Linda casa com vista para o mar' },
+        images: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+          description: 'Imagens do anúncio (mínimo 1, máximo 20)',
+          minItems: 1,
+          maxItems: 20,
+        },
+      },
+      required: ['titulo', 'tipo', 'endereco', 'cidade', 'estado', 'valor', 'images'],
+    },
+  })
   @ApiResponse({ status: 201, description: 'Anúncio criado com sucesso', type: AnuncioResponseDto })
-  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos ou imagens ausentes' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  create(@Body() createAnuncioDto: CreateAnuncioDto) {
-    return this.realEstateService.create(createAnuncioDto);
+  async create(
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10MB por imagem
+        ],
+        fileIsRequired: false, // Validação feita no use case
+      }),
+    )
+    files: Express.Multer.File[],
+    @Body() createAnuncioDto: CreateAnuncioDto,
+  ) {
+    const filesDtos = files?.map(file => ({
+      buffer: file.buffer,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    })) || [];
+
+    return this.createAnuncioWithImagesUseCase.execute(createAnuncioDto, filesDtos);
   }
 
   @Patch(':id')

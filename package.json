@@ -53,6 +53,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^20.19.30",
     "@types/supertest": "^6.0.2",
+    "sharp": "^0.34.5",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
