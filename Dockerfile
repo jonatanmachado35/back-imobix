@@ -1,18 +1,17 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 FROM deps AS dev
 WORKDIR /app
-COPY prisma ./prisma
 COPY tsconfig*.json ./
 COPY src ./src
 CMD ["sh", "-c", "npm run prisma:generate && npx prisma migrate deploy && npm run start:dev"]
 
 FROM deps AS build
 WORKDIR /app
-COPY prisma ./prisma
 COPY tsconfig*.json ./
 COPY src ./src
 RUN npm run build
