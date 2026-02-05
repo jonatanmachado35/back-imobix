@@ -21,9 +21,9 @@ export class DeleteAnuncioUseCase {
     }
 
     // 2. Validar autorização (dono ou admin)
-    const isOwner = anuncio.criadoPorId === userId;
+    const isOwner = (anuncio as any).criadoPorId === userId;
     const isAdmin = userRole === 'ADMIN';
-    const hasNoOwner = !anuncio.criadoPorId; // Anúncios legados sem dono
+    const hasNoOwner = !(anuncio as any).criadoPorId; // Anúncios legados sem dono
 
     if (!isOwner && !isAdmin && !hasNoOwner) {
       throw new ForbiddenException('Você não tem permissão para deletar este anúncio');

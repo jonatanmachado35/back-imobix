@@ -58,16 +58,22 @@ export class CreateAnuncioWithImagesUseCase {
     try {
       const anuncio = await this.prisma.$transaction(async (tx) => {
         // 2a. Criar o Anuncio
+        const anuncioData: any = {
+          titulo: dto.titulo,
+          tipo: dto.tipo,
+          endereco: dto.endereco,
+          cidade: dto.cidade,
+          estado: dto.estado,
+          valor: dto.valorDiaria, // Mapeia valorDiaria → valor
+        };
+
+        // Adicionar criadoPorId apenas se fornecido (retrocompatibilidade)
+        if (userId) {
+          anuncioData.criadoPorId = userId;
+        }
+
         const createdAnuncio = await tx.anuncio.create({
-          data: {
-            titulo: dto.titulo,
-            tipo: dto.tipo,
-            endereco: dto.endereco,
-            cidade: dto.cidade,
-            estado: dto.estado,
-            valor: dto.valorDiaria, // Mapeia valorDiaria → valor
-            criadoPorId: userId, // Associar ao usuário autenticado
-          },
+          data: anuncioData,
         });
 
         // 2b. Criar AnuncioImages vinculadas
