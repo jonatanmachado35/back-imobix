@@ -93,6 +93,9 @@ export class CreateAnuncioWithImagesUseCase {
           where: { id: createdAnuncio.id },
           include: { images: true },
         });
+      }, {
+        maxWait: 10000, // 10 segundos para aguardar conexão
+        timeout: 30000, // 30 segundos para completar transação
       });
 
       return anuncio;
