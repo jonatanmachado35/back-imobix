@@ -98,6 +98,7 @@ model User {
   // Relations
   funcionario Funcionario?
   corretor    Corretor?
+  anuncios    Anuncio[]    @relation("AnunciosCriados")
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -240,6 +241,10 @@ model Anuncio {
   valor           Decimal          @db.Decimal(10, 2)
   status          String           @default("ATIVO")
   
+  // Propriedade do anúncio
+  criadoPorId     String?          // ID do usuário que criou
+  criadoPor       User?            @relation("AnunciosCriados", fields: [criadoPorId], references: [id], onDelete: SetNull)
+  
   // Relations
   images          AnuncioImage[]
   
@@ -248,6 +253,7 @@ model Anuncio {
   
   @@index([status])
   @@index([cidade])
+  @@index([criadoPorId])
 }
 
 model AnuncioImage {

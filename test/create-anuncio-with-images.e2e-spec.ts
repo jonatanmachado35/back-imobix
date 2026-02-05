@@ -238,4 +238,72 @@ describe('Create Anuncio With Images E2E Tests', () => {
       expect(anunciosCount).toBe(0);
     });
   });
+
+  describe('DELETE /anuncios/:id', () => {
+    it('should delete anuncio and its images from Cloudinary', async () => {
+      // Criar anúncio com imagens primeiro
+      const createResponse = await createBaseRequest()
+        .attach('images', await createTestImageBuffer(200, 200), 'test-delete1.jpg')
+        .attach('images', await createTestImageBuffer(200, 200), 'test-delete2.jpg');
+
+      expect(createResponse.status).toBe(201);
+      const anuncioId = createResponse.body.id;
+
+      // Deletar anúncio
+      const deleteResponse = await request(app.getHttpServer())
+        .delete(`/anuncios/${anuncioId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(deleteResponse.status).toBe(204);
+
+      // Verificar que anúncio foi deletado do banco
+      const anuncioDb = await prisma.anuncio.findUnique({
+        where: { id: anuncioId },
+      });
+      expect(anuncioDb).toBeNull();
+
+      // Verificar que imagens foram deletadas do banco (cascade)
+      const imagesDb = await prisma.anuncioImage.findMany({
+        where: { anuncioId },
+      });
+      expect(imagesDb).toHaveLength(0);
+    });
+
+    it('should return 404 when deleting non-existent anuncio', async () => {
+      const nonExistentId = '00000000-0000-0000-0000-000000000000';
+
+      const response = await request(app.getHttpServer())
+        .delete(`/anuncios/${nonExistentId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toContain('Anúncio não encontrado');
+    });
+
+    it('should reject deletion without authentication', async () => {
+      // Criar anúncio
+      const createResponse = await createBaseRequest()
+        .attach('images', await createTestImageBuffer(100, 100), 'test-auth.jpg');
+
+      expect(createResponse.status).toBe(201);
+      const anuncioId = createResponse.body.id;
+
+      // Tentar deletar sem token
+      const deleteResponse = await request(app.getHttpServer())
+        .delete(`/anuncios/${anuncioId}`);
+      // Sem Authorization header
+
+      expect(deleteResponse.status).toBe(401);
+
+      // Verificar que anúncio ainda existe
+      const anuncioDb = await prisma.anuncio.findUnique({
+        where: { id: anuncioId },
+      });
+      expect(anuncioDb).not.toBeNull();
+
+      // Limpar
+      await prisma.anuncioImage.deleteMany({ where: { anuncioId } });
+      await prisma.anuncio.delete({ where: { id: anuncioId } });
+    });
+  });
 });

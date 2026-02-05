@@ -17,7 +17,7 @@ export class CreateAnuncioWithImagesUseCase {
     private readonly fileStorage: IFileStorageService,
   ) { }
 
-  async execute(dto: CreateAnuncioDto, images: UploadedFile[]) {
+  async execute(dto: CreateAnuncioDto, images: UploadedFile[], userId?: string) {
     // Validação: mínimo 1 imagem obrigatória
     if (!images || images.length === 0) {
       throw new BadRequestException('Pelo menos 1 imagem é obrigatória');
@@ -66,6 +66,7 @@ export class CreateAnuncioWithImagesUseCase {
             cidade: dto.cidade,
             estado: dto.estado,
             valor: dto.valorDiaria, // Mapeia valorDiaria → valor
+            criadoPorId: userId, // Associar ao usuário autenticado
           },
         });
 

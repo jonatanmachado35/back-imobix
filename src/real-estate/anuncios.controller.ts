@@ -13,6 +13,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -27,6 +28,7 @@ import { DeleteAnuncioImageUseCase } from '../application/use-cases/anuncio-imag
 import { ListAnuncioImagesUseCase } from '../application/use-cases/anuncio-images/list-anuncio-images.use-case';
 import { SetPrimaryImageUseCase } from '../application/use-cases/anuncio-images/set-primary-image.use-case';
 import { CreateAnuncioWithImagesUseCase } from '../application/use-cases/anuncio-images/create-anuncio-with-images.use-case';
+import { DeleteAnuncioUseCase } from '../application/use-cases/anuncio-images/delete-anuncio.use-case';
 
 @ApiTags('Anúncios')
 @ApiBearerAuth()
@@ -40,6 +42,7 @@ export class AnunciosController {
     private readonly listImagesUseCase: ListAnuncioImagesUseCase,
     private readonly setPrimaryImageUseCase: SetPrimaryImageUseCase,
     private readonly createAnuncioWithImagesUseCase: CreateAnuncioWithImagesUseCase,
+    private readonly deleteAnuncioUseCase: DeleteAnuncioUseCase,
   ) { }
 
   @Get()
@@ -103,6 +106,7 @@ export class AnunciosController {
     )
     files: Express.Multer.File[],
     @Body() createAnuncioDto: CreateAnuncioDto,
+    @Request() req,
   ) {
     const filesDtos = files?.map(file => ({
       buffer: file.buffer,
@@ -111,7 +115,7 @@ export class AnunciosController {
       size: file.size,
     })) || [];
 
-    return this.createAnuncioWithImagesUseCase.execute(createAnuncioDto, filesDtos);
+    return this.createAnuncioWithImagesUseCase.execute(createAnuncioDto, filesDtos, req.user.sub);
   }
 
   @Patch(':id')
@@ -228,5 +232,20 @@ export class AnunciosController {
     @Param('imageId') imageId: string,
   ) {
     return this.setPrimaryImageUseCase.execute(anuncioId, imageId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Deletar anúncio',
+    description: 'Remove o anúncio e todas as suas imagens do Cloudinary'
+  })
+  @ApiParam({ name: 'id', description: 'ID do anúncio' })
+  @ApiResponse({ status: 204, description: 'Anúncio deletado com sucesso' })
+  @ApiResponse({ status: 403, description: 'Sem permissão para deletar este anúncio' })
+  @ApiResponse({ status: 404, description: 'Anúncio não encontrado' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  async delete(@Param('id') id: string, @Request() req) {
+    await this.deleteAnuncioUseCase.execute(id, req.user.sub, req.user.role);
+    return;
   }
 }
