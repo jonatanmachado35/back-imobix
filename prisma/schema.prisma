@@ -93,12 +93,20 @@ model User {
   passwordHash String
   role         Role     @default(USER)
   avatar       String?
+  phone        String?
+  userRole     String?  @default("cliente") // 'cliente' | 'proprietario'
   refreshToken String?
   
   // Relations
-  funcionario Funcionario?
-  corretor    Corretor?
-  anuncios    Anuncio[]    @relation("AnunciosCriados")
+  funcionario       Funcionario?
+  corretor          Corretor?
+  anuncios          Anuncio[]    @relation("AnunciosCriados")
+  ownedProperties   Property[]   @relation("OwnerProperties")
+  bookingsAsGuest   Booking[]    @relation("GuestBookings")
+  favorites         Favorite[]
+  activities        Activity[]
+  clientConversations    ChatConversation[] @relation("ClientConversations")
+  ownerConversations     ChatConversation[] @relation("OwnerConversations")
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -277,4 +285,265 @@ model AnuncioImage {
   
   @@index([anuncioId])
   @@index([isPrimary])
+}
+
+// ========================================
+// NOVOS MODELOS - SPRINT 1-4
+// ========================================
+
+enum PropertyType {
+  VENDA
+  ALUGUEL
+  TEMPORADA
+}
+
+enum PropertyStatus {
+  ATIVO
+  PAUSADO
+  REMOVIDO
+}
+
+enum PropertyCategory {
+  CHALE
+  PRAIA
+  FAZENDA
+  SITIO
+  LUXO
+  CASA
+  APARTAMENTO
+}
+
+enum DocumentationStatus {
+  OK
+  PENDING
+  UNKNOWN
+}
+
+enum BookingStatus {
+  PENDENTE
+  CONFIRMADA
+  CANCELADA
+  CONCLUIDA
+}
+
+enum ActivityType {
+  RESERVA_CRIADA
+  RESERVA_CONFIRMADA
+  RESERVA_CONCLUIDA
+  RESERVA_CANCELADA
+  FAVORITO_ADICIONADO
+  MENSAGEM_ENVIADA
+}
+
+enum SenderRole {
+  CLIENTE
+  PROPRIETARIO
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model Property {
+  id                  String              @id @default(cuid())
+  ownerId             String
+  owner               User                @relation("OwnerProperties", fields: [ownerId], references: [id])
+  
+  type                PropertyType
+  status              PropertyStatus      @default(ATIVO)
+  title               String
+  description         String?             @db.Text
+  
+  // Preços
+  price               Decimal?            @db.Decimal(12, 2)
+  currency            String              @default("BRL")
+  pricePerNight       Decimal?            @db.Decimal(10, 2)
+  holidayPrice        Decimal?            @db.Decimal(10, 2)
+  
+  // Localização
+  address             String?
+  city                String?
+  neighborhood        String?
+  
+  // Características
+  bedrooms            Int                 @default(0)
+  bathrooms           Int                 @default(0)
+  parkingSpaces       Int                 @default(0)
+  area                Float?
+  
+  // Avaliações
+  rating              Float?
+  reviewCount         Int                 @default(0)
+  
+  // Amenidades
+  amenities           String[]
+  petFriendly         Boolean             @default(false)
+  furnished           Boolean             @default(false)
+  documentationStatus DocumentationStatus @default(UNKNOWN)
+  
+  // Temporada específico
+  minNights           Int?
+  maxGuests           Int?
+  checkInTime         String?
+  checkOutTime        String?
+  houseRules          String[]
+  category            PropertyCategory?
+  blockedDates        String[]
+  
+  // Imagens
+  images              PropertyImage[]
+  
+  // Relações
+  bookings            Booking[]
+  favorites           Favorite[]
+  conversations       ChatConversation[]
+  activities          Activity[]
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@index([status])
+  @@index([type])
+  @@index([city])
+  @@index([ownerId])
+}
+
+model PropertyImage {
+  id            String    @id @default(cuid())
+  propertyId    String
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  publicId      String    @unique
+  url           String
+  secureUrl     String
+  format        String
+  width         Int?
+  height        Int?
+  bytes         Int?
+  
+  displayOrder  Int       @default(0)
+  isPrimary     Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([propertyId])
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  propertyId      String
+  property        Property      @relation(fields: [propertyId], references: [id])
+  
+  guestId         String
+  guest           User          @relation("GuestBookings", fields: [guestId], references: [id])
+  
+  ownerId         String
+  
+  checkIn         DateTime
+  checkOut        DateTime
+  guests          Int
+  adults          Int
+  children        Int
+  totalNights     Int
+  
+  pricePerNight   Decimal       @db.Decimal(10, 2)
+  cleaningFee     Decimal       @db.Decimal(10, 2)
+  serviceFee      Decimal       @db.Decimal(10, 2)
+  totalPrice      Decimal       @db.Decimal(10, 2)
+  
+  status          BookingStatus @default(PENDENTE)
+  message         String?       @db.Text
+  
+  activities      Activity[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([propertyId])
+  @@index([guestId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([checkIn, checkOut])
+}
+
+model Favorite {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([userId, propertyId])
+  @@index([userId])
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  
+  type        ActivityType
+  title       String
+  description String?
+  
+  propertyId  String?
+  property    Property?    @relation(fields: [propertyId], references: [id])
+  
+  bookingId   String?
+  booking     Booking?     @relation(fields: [bookingId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ChatConversation {
+  id                  String        @id @default(cuid())
+  
+  propertyId          String
+  property            Property      @relation(fields: [propertyId], references: [id])
+  
+  clientId            String
+  client              User          @relation("ClientConversations", fields: [clientId], references: [id])
+  
+  ownerId             String
+  owner               User          @relation("OwnerConversations", fields: [ownerId], references: [id])
+  
+  lastMessage         String?
+  lastMessageTime     DateTime?
+  
+  messages            ChatMessage[]
+  
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  
+  @@unique([propertyId, clientId])
+  @@index([clientId])
+  @@index([ownerId])
+}
+
+model ChatMessage {
+  id              String            @id @default(cuid())
+  
+  conversationId  String
+  conversation    ChatConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId        String
+  senderRole      SenderRole
+  
+  text            String            @db.Text
+  status          MessageStatus     @default(SENT)
+  
+  createdAt       DateTime          @default(now())
+  
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
 }

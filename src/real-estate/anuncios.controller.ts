@@ -14,6 +14,7 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Request,
+  HttpCode,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -235,6 +236,7 @@ export class AnunciosController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({
     summary: 'Deletar anúncio',
     description: 'Remove o anúncio e todas as suas imagens do Cloudinary'

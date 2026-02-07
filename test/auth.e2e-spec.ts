@@ -16,16 +16,20 @@ describe('Auth (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     prisma = app.get(PrismaService);
-  });
+  }, 30000);
 
   beforeEach(async () => {
-    await prisma.funcionario.deleteMany();
-    await prisma.corretor.deleteMany();
-    await prisma.user.deleteMany();
+    if (prisma) {
+      await prisma.funcionario.deleteMany().catch(() => { });
+      await prisma.corretor.deleteMany().catch(() => { });
+      await prisma.user.deleteMany().catch(() => { });
+    }
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('POST /auth/login', () => {

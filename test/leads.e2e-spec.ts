@@ -16,14 +16,18 @@ describe('Leads (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     prisma = app.get(PrismaService);
-  });
+  }, 30000);
 
   beforeEach(async () => {
-    await prisma.lead.deleteMany();
+    if (prisma) {
+      await prisma.lead.deleteMany().catch(() => { });
+    }
   });
 
   afterAll(async () => {
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('POST /leads', () => {

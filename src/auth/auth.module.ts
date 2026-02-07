@@ -10,6 +10,9 @@ import { UserRepository } from '../application/ports/user-repository';
 import { PasswordHasher } from '../application/ports/password-hasher';
 import { TokenGenerator } from '../application/ports/token-generator';
 import { LoginUseCase } from '../application/use-cases/login.use-case';
+import { RegisterUserUseCase } from '../application/use-cases/register-user.use-case';
+import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
+import { LogoutUseCase } from '../application/use-cases/logout.use-case';
 import { USER_REPOSITORY } from '../users/users.tokens';
 import { PASSWORD_HASHER } from '../users/users.tokens';
 import { TOKEN_GENERATOR } from './auth.tokens';
@@ -37,9 +40,31 @@ import { UsersModule } from '../users/users.module';
       ) => new LoginUseCase(userRepository, passwordHasher, tokenGenerator),
       inject: [USER_REPOSITORY, PASSWORD_HASHER, TOKEN_GENERATOR]
     },
+    {
+      provide: RegisterUserUseCase,
+      useFactory: (
+        userRepository: UserRepository,
+        passwordHasher: PasswordHasher,
+        tokenGenerator: TokenGenerator
+      ) => new RegisterUserUseCase(userRepository, passwordHasher, tokenGenerator),
+      inject: [USER_REPOSITORY, PASSWORD_HASHER, TOKEN_GENERATOR]
+    },
+    {
+      provide: RefreshTokenUseCase,
+      useFactory: (
+        userRepository: UserRepository,
+        tokenGenerator: TokenGenerator
+      ) => new RefreshTokenUseCase(userRepository, tokenGenerator),
+      inject: [USER_REPOSITORY, TOKEN_GENERATOR]
+    },
+    {
+      provide: LogoutUseCase,
+      useFactory: (userRepository: UserRepository) => new LogoutUseCase(userRepository),
+      inject: [USER_REPOSITORY]
+    },
     AuthService,
     JwtStrategy
   ],
-  exports: [AuthService]
+  exports: [AuthService, TOKEN_GENERATOR]
 })
-export class AuthModule {}
+export class AuthModule { }

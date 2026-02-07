@@ -9,6 +9,11 @@ import { CrmModule } from './crm/crm.module';
 import { RealEstateModule } from './real-estate/real-estate.module';
 import { FinanceModule } from './finance/finance.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { PropertiesModule } from './properties/properties.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { ActivitiesModule } from './activities/activities.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -24,6 +29,11 @@ import { CalendarModule } from './calendar/calendar.module';
     RealEstateModule,
     FinanceModule,
     CalendarModule,
+    PropertiesModule,
+    BookingsModule,
+    FavoritesModule,
+    ActivitiesModule,
+    ChatModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

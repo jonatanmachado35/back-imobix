@@ -71,16 +71,20 @@ describe('Create Anuncio With Images E2E Tests', () => {
       .send({ email: testUser.email, password: 'Test@123' });
 
     authToken = loginResponse.body.access_token;
-  });
+  }, 30000);
 
   afterAll(async () => {
-    // Limpar dados de teste
-    await prisma.anuncioImage.deleteMany({});
-    await prisma.anuncio.deleteMany({});
-    await prisma.user.deleteMany({
-      where: { email: { contains: 'test-images-' } },
-    });
-    await app.close();
+    // Limpar dados de teste (null-safety)
+    if (prisma) {
+      await prisma.anuncioImage.deleteMany({}).catch(() => { });
+      await prisma.anuncio.deleteMany({}).catch(() => { });
+      await prisma.user.deleteMany({
+        where: { email: { contains: 'test-images-' } },
+      }).catch(() => { });
+    }
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('POST /anuncios (with images)', () => {

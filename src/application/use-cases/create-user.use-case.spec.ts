@@ -13,6 +13,11 @@ class InMemoryUserRepository implements UserRepository {
     return found ?? null;
   }
 
+  async findById(id: string): Promise<User | null> {
+    const found = this.items.find((item) => item.id === id);
+    return found ?? null;
+  }
+
   async create(data: { nome: string; email: string; passwordHash: string }): Promise<User> {
     const now = new Date();
     const user = new User(
@@ -26,6 +31,16 @@ class InMemoryUserRepository implements UserRepository {
     );
     this.items.push(user);
     return user;
+  }
+
+  async update(id: string, data: any): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) throw new Error('User not found');
+    return user;
+  }
+
+  async updateRefreshToken(userId: string, token: string | null): Promise<void> {
+    // No-op for tests
   }
 }
 
