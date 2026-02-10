@@ -9,6 +9,9 @@ describe('Create Anuncio With Images E2E Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let authToken: string;
+  let testImageBuffer100: Buffer;
+  let testImageBuffer120: Buffer;
+  let testImageBuffer200: Buffer;
 
   // Helper para criar imagem de teste REAL usando Sharp
   const createTestImageBuffer = async (width = 100, height = 100): Promise<Buffer> => {
@@ -52,6 +55,11 @@ describe('Create Anuncio With Images E2E Tests', () => {
 
     prisma = app.get<PrismaService>(PrismaService);
 
+    // Criar buffers de imagem uma vez para reutilizar
+    testImageBuffer100 = await createTestImageBuffer(100, 100);
+    testImageBuffer120 = await createTestImageBuffer(120, 120);
+    testImageBuffer200 = await createTestImageBuffer(200, 200);
+
     // Criar usuário de teste
     const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash('Test@123', 10);
@@ -70,8 +78,11 @@ describe('Create Anuncio With Images E2E Tests', () => {
       .post('/auth/login')
       .send({ email: testUser.email, password: 'Test@123' });
 
+    if (!loginResponse.body.access_token) {
+      throw new Error(`Failed to login: ${JSON.stringify(loginResponse.body)}`);
+    }
     authToken = loginResponse.body.access_token;
-  }, 30000);
+  }, 60000); // Aumentar timeout para 60s quando coverage está ativo
 
   afterAll(async () => {
     // Limpar dados de teste (null-safety)
@@ -97,7 +108,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
 
     it('should create anuncio with 1 image successfully', async () => {
       const response = await createBaseRequest()
-        .attach('images', await createTestImageBuffer(200, 200), 'casa1.jpg');
+        .attach('images', testImageBuffer200, 'casa1.jpg');
 
       if (response.status !== 201) {
         console.log('ERROR BODY:', JSON.stringify(response.body, null, 2));
@@ -130,9 +141,9 @@ describe('Create Anuncio With Images E2E Tests', () => {
         .field('quartos', '3')
         .field('camas', '4')
         .field('banheiros', '2')
-        .attach('images', await createTestImageBuffer(150, 150), 'apto1.jpg')
-        .attach('images', await createTestImageBuffer(300, 200), 'apto2.jpg')
-        .attach('images', await createTestImageBuffer(250, 180), 'apto3.jpg');
+        .attach('images', testImageBuffer120, 'apto1.jpg')
+        .attach('images', testImageBuffer200, 'apto2.jpg')
+        .attach('images', testImageBuffer120, 'apto3.jpg');
 
       if (response.status !== 201) {
         console.log('ERROR STATUS:', response.status);
@@ -173,7 +184,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
         .field('quartos', '3')
         .field('camas', '4')
         .field('banheiros', '2')
-        .attach('images', await createTestImageBuffer(100, 100), 'test.jpg');
+        .attach('images', testImageBuffer100, 'test.jpg');
 
       expect(response.status).toBe(401);
     });
@@ -193,8 +204,8 @@ describe('Create Anuncio With Images E2E Tests', () => {
         .field('quartos', '3')
         .field('camas', '4')
         .field('banheiros', '2')
-        .attach('images', await createTestImageBuffer(120, 120), 'test1.jpg')
-        .attach('images', await createTestImageBuffer(120, 120), 'test2.jpg');
+        .attach('images', testImageBuffer120, 'test1.jpg')
+        .attach('images', testImageBuffer120, 'test2.jpg');
 
       expect(response.status).toBe(201);
 
@@ -210,7 +221,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
       // Limpar
       await prisma.anuncioImage.deleteMany({ where: { anuncioId: response.body.id } });
       await prisma.anuncio.delete({ where: { id: response.body.id } });
-    });
+    }, 15000); // 15 segundos para testes com upload de imagens
   });
 
   describe('Business Rules Validation', () => {
@@ -247,8 +258,8 @@ describe('Create Anuncio With Images E2E Tests', () => {
     it('should delete anuncio and its images from Cloudinary', async () => {
       // Criar anúncio com imagens primeiro
       const createResponse = await createBaseRequest()
-        .attach('images', await createTestImageBuffer(200, 200), 'test-delete1.jpg')
-        .attach('images', await createTestImageBuffer(200, 200), 'test-delete2.jpg');
+        .attach('images', testImageBuffer200, 'test-delete1.jpg')
+        .attach('images', testImageBuffer200, 'test-delete2.jpg');
 
       expect(createResponse.status).toBe(201);
       const anuncioId = createResponse.body.id;
@@ -271,7 +282,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
         where: { anuncioId },
       });
       expect(imagesDb).toHaveLength(0);
-    });
+    }, 15000); // 15 segundos para testes com upload de imagens
 
     it('should return 404 when deleting non-existent anuncio', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
@@ -287,7 +298,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
     it('should reject deletion without authentication', async () => {
       // Criar anúncio
       const createResponse = await createBaseRequest()
-        .attach('images', await createTestImageBuffer(100, 100), 'test-auth.jpg');
+        .attach('images', testImageBuffer100, 'test-auth.jpg');
 
       expect(createResponse.status).toBe(201);
       const anuncioId = createResponse.body.id;

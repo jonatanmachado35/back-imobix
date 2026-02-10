@@ -19,16 +19,25 @@ export class UsersController {
   ) { }
 
   @Post()
-  @ApiOperation({ summary: 'Criar novo usuário', description: 'Registra um novo usuário no sistema' })
+  @ApiOperation({
+    summary: 'Auto-registro de usuário',
+    description: 'Endpoint público para qualquer pessoa se cadastrar como cliente ou proprietário (sem autenticação automática)'
+  })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso', type: UserResponseDto })
   @ApiResponse({ status: 409, description: 'Email já cadastrado' })
   async create(@Body() dto: CreateUserDto) {
     try {
-      const user = await this.createUser.execute(dto);
+      const user = await this.createUser.execute({
+        nome: dto.nome,
+        email: dto.email,
+        password: dto.password,
+        userRole: dto.userRole
+      });
       return {
         id: user.id,
         nome: user.nome,
         email: user.email,
+        userRole: user.userRole,
         createdAt: user.createdAt
       };
     } catch (error) {

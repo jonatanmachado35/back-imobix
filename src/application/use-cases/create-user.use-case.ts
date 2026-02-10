@@ -7,6 +7,7 @@ export type CreateUserInput = {
   nome: string;
   email: string;
   password: string;
+  userRole?: string;
 };
 
 export class CreateUserUseCase {
@@ -16,19 +17,27 @@ export class CreateUserUseCase {
   ) { }
 
   async execute(input: CreateUserInput): Promise<User> {
-    const existing = await this.users.findByEmail(input.email);
-    if (existing) {
-      throw new EmailAlreadyExistsError(input.email);
-    }
+    // Removed early check for existing user to avoid race conditions
+    // Database unique constraint will catch duplicates reliably
 
     const passwordHash = await this.hasher.hash(input.password);
 
     const data: CreateUserData = {
       nome: input.nome,
       email: input.email,
-      passwordHash
+      passwordHash,
+      userRole: input.userRole || 'cliente'
     };
 
-    return this.users.create(data);
+    try {
+      return await this.users.create(data);
+    } catch (error) {
+      // If repository throws EmailAlreadyExistsError (from database constraint),
+      // re-throw it so the controller can handle it
+      if (error instanceof EmailAlreadyExistsError) {
+        throw error;
+      }
+      throw error;
+    }
   }
 }

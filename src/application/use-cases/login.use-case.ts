@@ -30,12 +30,18 @@ export class LoginUseCase {
     private readonly userRepository: UserRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly tokenGenerator: TokenGenerator
-  ) {}
+  ) { }
 
   async execute(input: LoginInput): Promise<LoginOutput> {
     const user = await this.userRepository.findByEmail(input.email);
 
     if (!user) {
+      throw new InvalidCredentialsError();
+    }
+
+    // Guard: Ensure passwordHash exists (BUG-010 fix)
+    if (!user.passwordHash || typeof user.passwordHash !== 'string') {
+      console.error(`User ${input.email} has invalid passwordHash:`, typeof user.passwordHash);
       throw new InvalidCredentialsError();
     }
 

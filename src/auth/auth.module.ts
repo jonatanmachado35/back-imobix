@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RolesGuard } from './guards/roles.guard';
 import { DatabaseModule } from '../infrastructure/database/database.module';
 import { JwtTokenGenerator } from '../infrastructure/security/jwt-token-generator.service';
 import { UserRepository } from '../application/ports/user-repository';
@@ -63,7 +64,8 @@ import { UsersModule } from '../users/users.module';
       inject: [USER_REPOSITORY]
     },
     AuthService,
-    JwtStrategy
+    JwtStrategy,
+    RolesGuard
   ],
   exports: [AuthService, TOKEN_GENERATOR]
 })

@@ -1,3 +1,5 @@
+import { LeadNotQualifiedError, LeadAlreadyConvertedError } from './lead-errors';
+
 export enum LeadStatus {
   NOVO = 'NOVO',
   CONTATADO = 'CONTATADO',
@@ -76,11 +78,11 @@ export class Lead {
 
   convert(): Lead {
     if (this.status === LeadStatus.CONVERTIDO) {
-      throw new Error('Lead is already converted');
+      throw new LeadAlreadyConvertedError();
     }
 
     if (this.status !== LeadStatus.QUALIFICADO) {
-      throw new Error('Lead must be qualified before conversion');
+      throw new LeadNotQualifiedError();
     }
 
     return new Lead(

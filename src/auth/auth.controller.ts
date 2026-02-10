@@ -5,6 +5,9 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginResponseDto, UserProfileResponseDto } from './dto/login-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @ApiTags('Autenticação')
 @Controller('auth')
@@ -20,8 +23,16 @@ export class AuthController {
   }
 
   @Post('register')
-  @ApiOperation({ summary: 'Registrar novo usuário', description: 'Cria um novo usuário e retorna tokens' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '[ADMIN] Criar usuário e autenticar',
+    description: 'Apenas admins podem usar este endpoint. Cria usuário e retorna tokens JWT automaticamente.'
+  })
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Não autenticado ou não é admin' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas admins)' })
   @ApiResponse({ status: 409, description: 'E-mail já cadastrado' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async register(@Body() registerDto: RegisterDto) {

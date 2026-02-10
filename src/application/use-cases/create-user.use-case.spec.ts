@@ -19,6 +19,12 @@ class InMemoryUserRepository implements UserRepository {
   }
 
   async create(data: { nome: string; email: string; passwordHash: string }): Promise<User> {
+    // Check for duplicate email (simulating database unique constraint)
+    const existing = await this.findByEmail(data.email);
+    if (existing) {
+      throw new EmailAlreadyExistsError(data.email);
+    }
+    
     const now = new Date();
     const user = new User(
       String(this.counter++),

@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
@@ -14,19 +14,35 @@ describe('Auth (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ transform: true }));
     await app.init();
     prisma = app.get(PrismaService);
+
+    // Cleanup only specific test emails
+    if (prisma) {
+      await prisma.user.deleteMany({
+        where: {
+          OR: [
+            { email: { startsWith: 'test' } },
+            { email: { contains: '@example.com' } },
+          ]
+        }
+      }).catch(() => { });
+    }
   }, 30000);
 
-  beforeEach(async () => {
-    if (prisma) {
-      await prisma.funcionario.deleteMany().catch(() => { });
-      await prisma.corretor.deleteMany().catch(() => { });
-      await prisma.user.deleteMany().catch(() => { });
-    }
-  });
-
   afterAll(async () => {
+    // Cleanup test data
+    if (prisma) {
+      await prisma.user.deleteMany({
+        where: {
+          OR: [
+            { email: { startsWith: 'test' } },
+            { email: { contains: '@example.com' } },
+          ]
+        }
+      }).catch(() => { });
+    }
     if (app) {
       await app.close();
     }
@@ -40,7 +56,8 @@ describe('Auth (e2e)', () => {
         .send({
           nome: 'João Silva',
           email: 'joao@example.com',
-          password: 'password123'
+          password: 'password123',
+          userRole: 'cliente'
         });
 
       const response = await request(app.getHttpServer())
@@ -74,7 +91,8 @@ describe('Auth (e2e)', () => {
         .send({
           nome: 'João Silva',
           email: 'joao@example.com',
-          password: 'password123'
+          password: 'password123',
+          userRole: 'cliente'
         });
 
       await request(app.getHttpServer())
@@ -92,7 +110,7 @@ describe('Auth (e2e)', () => {
         .send({
           email: 'joao@example.com'
         })
-        .expect(401); // Auth service returns 401, not 400
+        .expect(400); // ValidationPipe returns 400 for missing required fields
     });
   });
 });

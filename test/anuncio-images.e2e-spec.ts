@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
+import * as bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma.service';
 
@@ -22,15 +23,15 @@ describe('Anuncio Images E2E Tests', () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Criar usuário de teste diretamente no banco
-    const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash('Test@123', 10);
-    
+
     const testUser = await prisma.user.create({
       data: {
         nome: 'Test User',
         email: `test-${Date.now()}@test.com`,
         passwordHash: hashedPassword,
         role: 'USER',
+        userRole: 'proprietario', // Adicionar userRole para o usuário
       },
     });
 
@@ -39,6 +40,9 @@ describe('Anuncio Images E2E Tests', () => {
       .post('/auth/login')
       .send({ email: testUser.email, password: 'Test@123' });
 
+    if (!loginResponse.body.access_token) {
+      throw new Error(`Failed to login: ${JSON.stringify(loginResponse.body)}`);
+    }
     authToken = loginResponse.body.access_token;
 
     // Criar anúncio de teste
@@ -55,13 +59,13 @@ describe('Anuncio Images E2E Tests', () => {
     });
 
     anuncioId = anuncio.id;
-  }, 30000);
+  }, 60000); // Aumentar timeout para 60s quando coverage está ativo
 
   afterAll(async () => {
     // Limpar dados de teste
     if (anuncioId) {
-      await prisma.anuncioImage.deleteMany({ where: { anuncioId } });
-      await prisma.anuncio.delete({ where: { id: anuncioId } });
+      await prisma.anuncioImage.deleteMany({ where: { anuncioId } }).catch(() => { });
+      await prisma.anuncio.delete({ where: { id: anuncioId } }).catch(() => { });
     }
     await app.close();
   });

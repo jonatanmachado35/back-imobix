@@ -28,6 +28,7 @@ import {
   LeadNotFoundError
 } from '../../application/use-cases/lead-errors';
 import { InvalidLeadDataError } from '../../domain/entities/lead';
+import { LeadNotQualifiedError, LeadAlreadyConvertedError } from '../../domain/entities/lead-errors';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadResponseDto, LeadListResponseDto, LeadStatusResponseDto, ImportLeadsResponseDto } from './dto/lead-response.dto';
@@ -55,7 +56,7 @@ export class LeadsController {
     private readonly getLeadById: GetLeadByIdUseCase,
     private readonly listLeads: ListLeadsUseCase,
     private readonly importLeadsFromCsv: ImportLeadsFromCsvUseCase
-  ) {}
+  ) { }
 
   @Post()
   @ApiOperation({ summary: 'Criar novo lead', description: 'Cria um novo lead no sistema CRM' })
@@ -89,9 +90,9 @@ export class LeadsController {
   }
 
   @Post('import')
-  @ApiOperation({ 
-    summary: 'Importar leads via CSV', 
-    description: 'Faz upload de um arquivo CSV para importação em massa de leads. O CSV deve conter as colunas: nome, email, telefone (opcional), origem (opcional), interesse (opcional)' 
+  @ApiOperation({
+    summary: 'Importar leads via CSV',
+    description: 'Faz upload de um arquivo CSV para importação em massa de leads. O CSV deve conter as colunas: nome, email, telefone (opcional), origem (opcional), interesse (opcional)'
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -120,7 +121,7 @@ export class LeadsController {
 
     try {
       const result = await this.importLeadsFromCsv.execute(file.buffer);
-      
+
       const message = result.errorCount === 0
         ? `Importação concluída com sucesso! ${result.successCount} leads cadastrados.`
         : `Importação concluída: ${result.successCount} leads cadastrados com sucesso, ${result.errorCount} erros encontrados.`;
@@ -247,6 +248,12 @@ export class LeadsController {
     } catch (error) {
       if (error instanceof LeadNotFoundError) {
         throw new NotFoundException('Lead not found');
+      }
+      if (error instanceof LeadNotQualifiedError) {
+        throw new BadRequestException('Lead deve estar qualificado antes de ser convertido');
+      }
+      if (error instanceof LeadAlreadyConvertedError) {
+        throw new BadRequestException('Lead já foi convertido');
       }
       throw error;
     }

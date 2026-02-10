@@ -72,11 +72,8 @@ export class RegisterUserUseCase {
       throw new InvalidPasswordError('Password must be at least 8 characters');
     }
 
-    // 2. Check if email already exists
-    const existingUser = await this.userRepository.findByEmail(email);
-    if (existingUser) {
-      throw new EmailAlreadyExistsError(email);
-    }
+    // 2. Removed early check for existing user to avoid race conditions
+    // Database unique constraint will catch duplicates reliably
 
     // 3. Hash password
     const passwordHash = await this.passwordHasher.hash(input.password);
@@ -84,7 +81,7 @@ export class RegisterUserUseCase {
     // 4. Map role to database role
     const dbRole = input.role === UserRole.PROPRIETARIO ? 'ADMIN' : 'USER';
 
-    // 5. Create user
+    // 5. Create user (database constraint will catch duplicates)
     const user = await this.userRepository.create({
       nome: name,
       email: email,
@@ -92,6 +89,8 @@ export class RegisterUserUseCase {
       role: dbRole,
       userRole: input.role,
     });
+    // Note: If email already exists, repository will throw EmailAlreadyExistsError
+    // which will propagate up to the caller
 
     // 6. Generate tokens
     const tokenPayload = {

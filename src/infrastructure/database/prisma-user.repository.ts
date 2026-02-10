@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CreateUserData, UpdateUserData, UserRepository } from '../../application/ports/user-repository';
+import { EmailAlreadyExistsError } from '../../application/use-cases/user-errors';
 import { User } from '../../domain/entities/user';
 import { PrismaService } from './prisma.service';
 
@@ -34,15 +36,24 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async create(data: CreateUserData): Promise<User> {
-    const user = await this.prisma.user.create({
-      data: {
-        nome: data.nome,
-        email: data.email,
-        passwordHash: data.passwordHash,
-        role: data.role as any || 'USER',
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          nome: data.nome,
+          email: data.email,
+          passwordHash: data.passwordHash,
+          role: data.role as any || 'USER',
+          userRole: data.userRole || 'cliente',
+        }
+      });
+      return this.toDomain(user);
+    } catch (error) {
+      // P2002 é o código de erro do Prisma para violação de constraint unique
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new EmailAlreadyExistsError(data.email);
       }
-    });
-    return this.toDomain(user);
+      throw error;
+    }
   }
 
   async update(id: string, data: UpdateUserData): Promise<User> {

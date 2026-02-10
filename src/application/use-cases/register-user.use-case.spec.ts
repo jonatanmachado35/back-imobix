@@ -57,7 +57,6 @@ describe('RegisterUserUseCase', () => {
         role: UserRole.CLIENTE,
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(null);
       mockPasswordHasher.hash.mockResolvedValue('hashed-password');
       mockUserRepository.create.mockResolvedValue(mockUser);
       mockTokenGenerator.generate.mockReturnValue('jwt-token');
@@ -76,7 +75,7 @@ describe('RegisterUserUseCase', () => {
         refreshToken: 'refresh-token',
       });
 
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('joao@email.com');
+      // No more early email check - let database constraint handle it
       expect(mockPasswordHasher.hash).toHaveBeenCalledWith('senha12345');
       expect(mockUserRepository.create).toHaveBeenCalledWith({
         nome: 'João Silva',
@@ -105,7 +104,6 @@ describe('RegisterUserUseCase', () => {
         new Date()
       );
 
-      mockUserRepository.findByEmail.mockResolvedValue(null);
       mockPasswordHasher.hash.mockResolvedValue('hashed-password');
       mockUserRepository.create.mockResolvedValue(proprietarioUser);
       mockTokenGenerator.generate.mockReturnValue('jwt-token');
@@ -133,11 +131,13 @@ describe('RegisterUserUseCase', () => {
         role: UserRole.CLIENTE,
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
+      mockPasswordHasher.hash.mockResolvedValue('hashed-password');
+      // Repository.create throws error (simulating database constraint)
+      mockUserRepository.create.mockRejectedValue(new EmailAlreadyExistsError('joao@email.com'));
 
       await expect(useCase.execute(input)).rejects.toThrow(EmailAlreadyExistsError);
-      expect(mockPasswordHasher.hash).not.toHaveBeenCalled();
-      expect(mockUserRepository.create).not.toHaveBeenCalled();
+      expect(mockPasswordHasher.hash).toHaveBeenCalledWith('senha12345');
+      expect(mockUserRepository.create).toHaveBeenCalled();
     });
 
     it('should throw error if password is less than 8 characters', async () => {
@@ -147,8 +147,6 @@ describe('RegisterUserUseCase', () => {
         password: '1234567', // 7 chars
         role: UserRole.CLIENTE,
       };
-
-      mockUserRepository.findByEmail.mockResolvedValue(null);
 
       await expect(useCase.execute(input)).rejects.toThrow('Password must be at least 8 characters');
     });
@@ -185,7 +183,6 @@ describe('RegisterUserUseCase', () => {
         role: UserRole.CLIENTE,
       };
 
-      mockUserRepository.findByEmail.mockResolvedValue(null);
       mockPasswordHasher.hash.mockResolvedValue('hashed-password');
       mockUserRepository.create.mockResolvedValue(mockUser);
       mockTokenGenerator.generate.mockReturnValue('jwt-token');
@@ -193,7 +190,7 @@ describe('RegisterUserUseCase', () => {
 
       await useCase.execute(input);
 
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('joao@email.com');
+      // Verify trimmed values are passed to create
       expect(mockUserRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           nome: 'João Silva',

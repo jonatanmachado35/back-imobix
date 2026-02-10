@@ -235,7 +235,7 @@ describe('Leads (e2e)', () => {
 
       await request(app.getHttpServer())
         .patch(`/leads/${created.body.id}/convert`)
-        .expect(500); // Domain error
+        .expect(400); // BadRequestException - lead deve estar qualificado
     });
 
     it('should return 404 for non-existent lead', async () => {
