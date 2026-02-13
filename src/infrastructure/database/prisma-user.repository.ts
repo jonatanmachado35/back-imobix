@@ -62,6 +62,8 @@ export class PrismaUserRepository implements UserRepository {
       data: {
         nome: data.nome,
         email: data.email,
+        phone: data.phone,
+        avatar: data.avatar,
       }
     });
     return this.toDomain(user);

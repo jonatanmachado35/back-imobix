@@ -24,6 +24,7 @@ describe('Users (e2e)', () => {
           OR: [
             { email: 'ana@example.com' },
             { email: 'ana-duplicate@example.com' },
+            { email: 'update-phone@example.com' },
           ]
         }
       }).catch(() => { });
@@ -38,6 +39,7 @@ describe('Users (e2e)', () => {
           OR: [
             { email: 'ana@example.com' },
             { email: 'ana-duplicate@example.com' },
+            { email: 'update-phone@example.com' },
           ]
         }
       }).catch(() => { });
@@ -87,5 +89,57 @@ describe('Users (e2e)', () => {
         userRole: 'cliente'
       })
       .expect(409);
+  });
+
+  it('PATCH /users/me updates phone and avatar fields', async () => {
+    // 1. Create a user
+    const createResponse = await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        nome: 'Test User',
+        email: 'update-phone@example.com',
+        password: 'password123',
+        userRole: 'cliente'
+      })
+      .expect(201);
+
+    // 2. Login to get JWT token
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'update-phone@example.com',
+        password: 'password123'
+      })
+      .expect(201);
+
+    const accessToken = loginResponse.body.access_token;
+    expect(accessToken).toBeDefined();
+
+    // 3. Update profile with phone and avatar
+    const updateResponse = await request(app.getHttpServer())
+      .patch('/users/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        name: 'Updated Name',
+        email: 'update-phone@example.com',
+        phone: '51988888888',
+        avatar: 'https://example.com/avatar.jpg'
+      })
+      .expect(200);
+
+    // 4. Assert that phone and avatar are updated
+    expect(updateResponse.body.name).toBe('Updated Name');
+    expect(updateResponse.body.phone).toBe('51988888888');
+    expect(updateResponse.body.avatar).toBe('https://example.com/avatar.jpg');
+    expect(updateResponse.body.email).toBe('update-phone@example.com');
+
+    // 5. Verify by getting profile again
+    const profileResponse = await request(app.getHttpServer())
+      .get('/users/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(profileResponse.body.phone).toBe('51988888888');
+    expect(profileResponse.body.avatar).toBe('https://example.com/avatar.jpg');
   });
 });
