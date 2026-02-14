@@ -24,10 +24,12 @@ describe('RegisterUserUseCase', () => {
   beforeEach(() => {
     mockUserRepository = {
       findByEmail: jest.fn(),
-      create: jest.fn(),
       findById: jest.fn(),
+      findByResetToken: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
       updateRefreshToken: jest.fn(),
+      save: jest.fn(),
     };
 
     mockPasswordHasher = {

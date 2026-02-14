@@ -21,7 +21,9 @@ export class PrismaUserRepository implements UserRepository {
       user.phone,
       user.avatar,
       user.userRole,
-      user.refreshToken
+      user.refreshToken,
+      user.resetPasswordToken,
+      user.resetPasswordExpiry,
     );
   }
 
@@ -32,6 +34,13 @@ export class PrismaUserRepository implements UserRepository {
 
   async findById(id: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
+    return user ? this.toDomain(user) : null;
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    const user = await (this.prisma.user as any).findUnique({
+      where: { resetPasswordToken: token }
+    });
     return user ? this.toDomain(user) : null;
   }
 
@@ -73,6 +82,24 @@ export class PrismaUserRepository implements UserRepository {
     await this.prisma.user.update({
       where: { id },
       data: { refreshToken: token }
+    });
+  }
+
+  async save(user: User): Promise<void> {
+    await (this.prisma.user as any).update({
+      where: { id: user.id },
+      data: {
+        nome: user.nome,
+        email: user.email,
+        passwordHash: user.passwordHash,
+        role: user.role as any,
+        avatar: user.avatar,
+        phone: user.phone,
+        userRole: user.userRole,
+        refreshToken: user.refreshToken,
+        resetPasswordToken: user.resetPasswordToken,
+        resetPasswordExpiry: user.resetPasswordExpiry,
+      }
     });
   }
 }

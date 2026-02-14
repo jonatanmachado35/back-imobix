@@ -42,6 +42,20 @@ class InMemoryUserRepository implements UserRepository {
   async updateRefreshToken(userId: string, token: string | null): Promise<void> {
     // No-op for tests
   }
+
+  async save(user: User): Promise<void> {
+    const index = this.items.findIndex((item) => item.id === user.id);
+    if (index >= 0) {
+      this.items[index] = user;
+      return;
+    }
+    this.items.push(user);
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    const found = this.items.find((item) => item.resetPasswordToken === token);
+    return found ?? null;
+  }
 }
 
 class FakeHasher implements PasswordHasher {

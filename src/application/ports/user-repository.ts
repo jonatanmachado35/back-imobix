@@ -21,4 +21,8 @@ export interface UserRepository {
   create(data: CreateUserData): Promise<User>;
   update(id: string, data: UpdateUserData): Promise<User>;
   updateRefreshToken(id: string, token: string | null): Promise<void>;
+
+  // 🆕 Métodos para password management
+  save(user: User): Promise<void>;
+  findByResetToken(token: string): Promise<User | null>;
 }

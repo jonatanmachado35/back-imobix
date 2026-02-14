@@ -41,9 +41,11 @@ describe('DeleteUserAvatarUseCase', () => {
     userRepository = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
+      findByResetToken: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       updateRefreshToken: jest.fn(),
+      save: jest.fn(),
     } as jest.Mocked<UserRepository>;
 
     fileStorageService = {

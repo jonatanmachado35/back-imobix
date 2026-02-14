@@ -14,6 +14,9 @@ import { LoginUseCase } from '../application/use-cases/login.use-case';
 import { RegisterUserUseCase } from '../application/use-cases/register-user.use-case';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
+import { ChangePasswordUseCase } from '../application/use-cases/password/change-password.use-case';
+import { RequestPasswordResetUseCase } from '../application/use-cases/password/request-password-reset.use-case';
+import { ResetPasswordUseCase } from '../application/use-cases/password/reset-password.use-case';
 import { USER_REPOSITORY } from '../users/users.tokens';
 import { PASSWORD_HASHER } from '../users/users.tokens';
 import { TOKEN_GENERATOR } from './auth.tokens';
@@ -62,6 +65,24 @@ import { UsersModule } from '../users/users.module';
       provide: LogoutUseCase,
       useFactory: (userRepository: UserRepository) => new LogoutUseCase(userRepository),
       inject: [USER_REPOSITORY]
+    },
+    {
+      provide: ChangePasswordUseCase,
+      useFactory: (userRepository: UserRepository, passwordHasher: PasswordHasher) =>
+        new ChangePasswordUseCase(userRepository, passwordHasher),
+      inject: [USER_REPOSITORY, PASSWORD_HASHER]
+    },
+    {
+      provide: RequestPasswordResetUseCase,
+      useFactory: (userRepository: UserRepository) =>
+        new RequestPasswordResetUseCase(userRepository),
+      inject: [USER_REPOSITORY]
+    },
+    {
+      provide: ResetPasswordUseCase,
+      useFactory: (userRepository: UserRepository, passwordHasher: PasswordHasher) =>
+        new ResetPasswordUseCase(userRepository, passwordHasher),
+      inject: [USER_REPOSITORY, PASSWORD_HASHER]
     },
     AuthService,
     JwtStrategy,

@@ -24,9 +24,11 @@ describe('GetUserProfileUseCase', () => {
     mockUserRepository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByResetToken: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       updateRefreshToken: jest.fn(),
+      save: jest.fn(),
     };
 
     useCase = new GetUserProfileUseCase(mockUserRepository);

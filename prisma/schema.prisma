@@ -97,6 +97,10 @@ model User {
   userRole     String?  @default("cliente") // 'cliente' | 'proprietario'
   refreshToken String?
   
+  // Password Reset
+  resetPasswordToken  String?   @unique
+  resetPasswordExpiry DateTime?
+  
   // Relations
   funcionario       Funcionario?
   corretor          Corretor?

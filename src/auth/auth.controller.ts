@@ -8,6 +8,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { RequestPasswordResetDto, RequestPasswordResetResponseDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Autenticação')
 @Controller('auth')
@@ -70,5 +73,58 @@ export class AuthController {
       email: req.user.email,
       role: req.user.role
     };
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Mudar senha',
+    description: 'Usuário autenticado altera sua própria senha'
+  })
+  @ApiResponse({ status: 204, description: 'Senha alterada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Senha atual incorreta ou nova senha inválida' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  async changePassword(
+    @Request() req,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<void> {
+    await this.authService.changePassword(req.user.userId, dto);
+  }
+
+  @Post('admin/request-password-reset')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '[ADMIN] Gerar token de reset de senha',
+    description: 'Apenas admins podem gerar tokens de reset (versão simplificada sem email)'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Token gerado com sucesso',
+    type: RequestPasswordResetResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Sem permissão (apenas admins)' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async requestPasswordReset(
+    @Body() dto: RequestPasswordResetDto,
+  ): Promise<RequestPasswordResetResponseDto> {
+    return this.authService.requestPasswordReset(dto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Resetar senha com token',
+    description: 'Redefine senha usando token gerado pelo admin (versão simplificada)'
+  })
+  @ApiResponse({ status: 204, description: 'Senha resetada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Token inválido, expirado ou senha inválida' })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.authService.resetPassword(dto);
   }
 }
