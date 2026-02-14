@@ -12,7 +12,7 @@ export type UpdateUserData = {
   nome?: string;
   email?: string;
   phone?: string;
-  avatar?: string;
+  avatar?: string | null;
 };
 
 export interface UserRepository {
