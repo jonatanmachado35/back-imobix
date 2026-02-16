@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../infrastructure/database/database.module';
+import { CloudinaryModule } from '../infrastructure/file-storage/cloudinary/cloudinary.module';
 import { PROPERTY_REPOSITORY } from './properties.tokens';
 import { PrismaPropertyRepository } from '../infrastructure/database/prisma-property.repository';
 import { PrismaService } from '../infrastructure/database/prisma.service';
@@ -12,9 +13,13 @@ import { ListOwnerPropertiesUseCase } from '../application/use-cases/properties/
 import { PropertiesController } from '../interfaces/http/properties.controller';
 import { ProprietarioController } from '../interfaces/http/proprietario.controller';
 import { PropertyRepository } from '../application/ports/property-repository';
+import { UploadPropertyImageUseCase } from '../application/use-cases/property-images/upload-property-image.use-case';
+import { DeletePropertyImageUseCase } from '../application/use-cases/property-images/delete-property-image.use-case';
+import { ListPropertyImagesUseCase } from '../application/use-cases/property-images/list-property-images.use-case';
+import { SetPrimaryPropertyImageUseCase } from '../application/use-cases/property-images/set-primary-property-image.use-case';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, CloudinaryModule],
   controllers: [PropertiesController, ProprietarioController],
   providers: [
     PrismaService,
@@ -49,6 +54,10 @@ import { PropertyRepository } from '../application/ports/property-repository';
       useFactory: (repo: PropertyRepository) => new ListOwnerPropertiesUseCase(repo),
       inject: [PROPERTY_REPOSITORY],
     },
+    UploadPropertyImageUseCase,
+    DeletePropertyImageUseCase,
+    ListPropertyImagesUseCase,
+    SetPrimaryPropertyImageUseCase,
   ],
   exports: [PROPERTY_REPOSITORY],
 })

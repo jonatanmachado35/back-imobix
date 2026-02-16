@@ -38,6 +38,9 @@ export class PrismaPropertyRepository implements PropertyRepository {
       houseRules: data.houseRules,
       category: data.category as PropertyCategory,
       blockedDates: data.blockedDates,
+      images: Array.isArray(data.images)
+        ? data.images.map((image: any) => image.secureUrl ?? image.url)
+        : [],
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });

@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "qa-regression-e2e",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"test:e2e",
+				"--",
+				"--runInBand"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "build-check-after-qa-fixes",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false
+		}
+	]
+}

@@ -181,6 +181,7 @@ export class Property {
       houseRules: this.houseRules,
       category: this.category,
       blockedDates: this.blockedDates,
+      images: this.images,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
