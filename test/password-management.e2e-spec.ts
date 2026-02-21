@@ -57,7 +57,7 @@ describe('Password Management (e2e)', () => {
 
     adminToken = jwt.sign(
       { sub: adminUser.id, email: adminUser.email, role: adminUser.role },
-      process.env.JWT_SECRET || 'secret',
+      process.env.JWT_SECRET,
       { expiresIn: '1h' },
     );
 
@@ -81,7 +81,7 @@ describe('Password Management (e2e)', () => {
 
     userToken = jwt.sign(
       { sub: normalUser.id, email: normalUser.email, role: normalUser.role },
-      process.env.JWT_SECRET || 'secret',
+      process.env.JWT_SECRET,
       { expiresIn: '1h' },
     );
   });

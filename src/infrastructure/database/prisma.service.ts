@@ -12,7 +12,19 @@ export class PrismaService
     super({
       log: ['error', 'warn'],
       errorFormat: 'pretty',
+      datasources: {
+        db: {
+          url: process.env.DIRECT_URL || process.env.DATABASE_URL,
+        },
+      },
     });
+
+    // Configure connection pool for test environment
+    if (process.env.NODE_ENV === 'test') {
+      this.$connect().then(() => {
+        this.logger.log('Test database connected');
+      });
+    }
   }
 
   async onModuleInit() {

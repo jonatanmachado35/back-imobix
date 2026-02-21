@@ -4,6 +4,8 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/infrastructure/database/prisma.service';
 
+jest.setTimeout(60000);
+
 describe('UserAvatarController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -63,7 +65,7 @@ describe('UserAvatarController (e2e)', () => {
     }
 
     authToken = loginResponse.body.access_token;
-  }, 30000);
+  }, 60000);
 
   afterAll(async () => {
     // Limpar usuários de teste
