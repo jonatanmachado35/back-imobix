@@ -50,15 +50,15 @@ services:
     image: postgres:15-alpine
     container_name: imobix-postgres-test
     environment:
-      POSTGRES_USER: 
-      POSTGRES_PASSWORD: 
-      POSTGRES_DB: 
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U  -d "]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -82,8 +82,12 @@ DIRECT_URL="postgresql://postgres:jRY8yWL4Cd5M6JxhqritgZXcF4@db.pqtqsikpyrqhjxhw
 **Para:**
 ```env
 # Database Local Docker
-DATABASE_URL="postgresql://:@localhost:/?schema=public"
-DIRECT_URL="postgresql://:@localhost:/?schema=public"
+POSTGRES_USER=<SEU_USUARIO>
+POSTGRES_PASSWORD=<SUA_SENHA>
+POSTGRES_DB=imobix_test
+POSTGRES_PORT=5433
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
+DIRECT_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public"
 
 # Configurações da aplicação
 PORT=3000
@@ -91,10 +95,10 @@ BCRYPT_SALT_ROUNDS=10
 JWT_SECRET="super-secret-key-change-in-production"
 JWT_EXPIRES_IN="1d"
 JWT_REFRESH_SECRET="super-secret-refresh-key-change-in-production"
-JWT_REFRESH_EXPIRES_IN="7d
-CLOUDINARY_CLOUD_NAME="
+JWT_REFRESH_EXPIRES_IN="7d"
 
-# Cloudinarydtl5wdhnu
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=<SEU_CLOUD_NAME>
 CLOUDINARY_API_KEY=<SUA_API_KEY>
 CLOUDINARY_API_SECRET=<SUA_API_SECRET>
 ```
