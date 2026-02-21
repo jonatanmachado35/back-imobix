@@ -1,7 +1,7 @@
 # -------------------------
 # Dependencies
 # -------------------------
-FROM node:20-bookworm-slim AS deps
+FROM node:20-bullseye-slim AS deps
 WORKDIR /app
 
 COPY package*.json ./
@@ -26,10 +26,13 @@ RUN npm prune --omit=dev
 # -------------------------
 # Runtime
 # -------------------------
-FROM node:20-bookworm-slim AS runtime
+FROM node:20-bullseye-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# Instalar libssl necessária para Prisma
+RUN apt-get update && apt-get install -y --no-install-recommends     libssl1.1     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
