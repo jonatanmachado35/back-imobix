@@ -22,6 +22,7 @@ export type LoginOutput = {
     nome: string;
     email: string;
     role: string;
+    userType: string;
   };
 };
 
@@ -66,7 +67,8 @@ export class LoginUseCase {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        role: user.role
+        role: user.role,
+        userType: user.userRole || 'cliente'
       }
     };
   }

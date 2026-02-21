@@ -1,21 +1,17 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   FileUploadDto,
   IFileStorageService,
 } from '../../ports/file-storage.interface';
+import { PropertyRepository } from '../../ports/property-repository';
+import { PROPERTY_REPOSITORY } from '../../../properties/properties.tokens';
 
 @Injectable()
 export class UploadPropertyImageUseCase {
   private readonly MAX_IMAGES_PER_PROPERTY = 20;
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PROPERTY_REPOSITORY) private readonly propertyRepository: PropertyRepository,
     private readonly fileStorageService: IFileStorageService,
   ) { }
 
@@ -26,10 +22,7 @@ export class UploadPropertyImageUseCase {
     isPrimary = false,
     displayOrder = 0,
   ) {
-    const property = await this.prisma.property.findUnique({
-      where: { id: propertyId },
-      include: { images: true },
-    });
+    const property = await this.propertyRepository.findById(propertyId);
 
     if (!property) {
       throw new NotFoundException(`Property com ID ${propertyId} não encontrada`);
@@ -52,25 +45,20 @@ export class UploadPropertyImageUseCase {
       uploadResult = await this.fileStorageService.upload(file, 'properties');
 
       if (isPrimary) {
-        await this.prisma.propertyImage.updateMany({
-          where: { propertyId },
-          data: { isPrimary: false },
-        });
+        await this.propertyRepository.clearImagePrimary(propertyId);
       }
 
-      createdImage = await this.prisma.propertyImage.create({
-        data: {
-          propertyId,
-          publicId: uploadResult.publicId,
-          url: uploadResult.url,
-          secureUrl: uploadResult.secureUrl,
-          format: uploadResult.format,
-          width: uploadResult.width,
-          height: uploadResult.height,
-          bytes: uploadResult.bytes,
-          displayOrder,
-          isPrimary,
-        },
+      createdImage = await this.propertyRepository.createImage({
+        propertyId,
+        publicId: uploadResult.publicId,
+        url: uploadResult.url,
+        secureUrl: uploadResult.secureUrl,
+        format: uploadResult.format,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        bytes: uploadResult.bytes,
+        displayOrder,
+        isPrimary,
       });
 
       return createdImage;

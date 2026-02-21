@@ -26,7 +26,7 @@ import { ImportLeadsFromCsvUseCase } from '../../application/use-cases/import-le
 import {
   LeadAlreadyExistsError,
   LeadNotFoundError
-} from '../../application/use-cases/lead-errors';
+} from '../../domain/entities/lead-errors';
 import { InvalidLeadDataError } from '../../domain/entities/lead';
 import { LeadNotQualifiedError, LeadAlreadyConvertedError } from '../../domain/entities/lead-errors';
 import { CreateLeadDto } from './dto/create-lead.dto';

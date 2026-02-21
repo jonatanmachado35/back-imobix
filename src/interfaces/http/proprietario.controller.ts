@@ -19,6 +19,7 @@ import { UploadPropertyImageUseCase } from '../../application/use-cases/property
 import { ListPropertyImagesUseCase } from '../../application/use-cases/property-images/list-property-images.use-case';
 import { DeletePropertyImageUseCase } from '../../application/use-cases/property-images/delete-property-image.use-case';
 import { SetPrimaryPropertyImageUseCase } from '../../application/use-cases/property-images/set-primary-property-image.use-case';
+import { ValidateImageFileUseCase } from '../../application/use-cases/property-images/validate-image-file.use-case';
 import { UploadPropertyImageDto } from './dto/upload-property-image.dto';
 
 @ApiTags('Proprietário')
@@ -35,6 +36,7 @@ export class ProprietarioController {
     private readonly listPropertyImagesUseCase: ListPropertyImagesUseCase,
     private readonly deletePropertyImageUseCase: DeletePropertyImageUseCase,
     private readonly setPrimaryPropertyImageUseCase: SetPrimaryPropertyImageUseCase,
+    private readonly validateImageFileUseCase: ValidateImageFileUseCase,
   ) { }
 
   @Get('properties')
@@ -223,10 +225,7 @@ export class ProprietarioController {
     file: Express.Multer.File,
     @Body() uploadDto?: UploadPropertyImageDto,
   ) {
-    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Tipo de arquivo inválido. Use apenas JPEG, PNG ou WEBP.');
-    }
+    this.validateImageFileUseCase.execute(file);
 
     const fileDto = {
       buffer: file.buffer,

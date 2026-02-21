@@ -1,20 +1,17 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { PropertyRepository } from '../../ports/property-repository';
 import { IFileStorageService } from '../../ports/file-storage.interface';
+import { PROPERTY_REPOSITORY } from '../../../properties/properties.tokens';
 
 @Injectable()
 export class DeletePropertyImageUseCase {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PROPERTY_REPOSITORY) private readonly propertyRepository: PropertyRepository,
     private readonly fileStorageService: IFileStorageService,
   ) { }
 
   async execute(propertyId: string, imageId: string, ownerId: string): Promise<void> {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.propertyRepository.findById(propertyId);
 
     if (!property) {
       throw new NotFoundException(`Property com ID ${propertyId} não encontrada`);
@@ -24,12 +21,7 @@ export class DeletePropertyImageUseCase {
       throw new ForbiddenException('You are not the owner of this property');
     }
 
-    const image = await this.prisma.propertyImage.findFirst({
-      where: {
-        id: imageId,
-        propertyId,
-      },
-    });
+    const image = await this.propertyRepository.findImageById(imageId, propertyId);
 
     if (!image) {
       throw new NotFoundException(
@@ -45,21 +37,12 @@ export class DeletePropertyImageUseCase {
       // noop
     }
 
-    await this.prisma.propertyImage.delete({
-      where: { id: imageId },
-    });
+    await this.propertyRepository.deleteImage(imageId);
 
     if (wasPrimary) {
-      const nextImage = await this.prisma.propertyImage.findFirst({
-        where: { propertyId },
-        orderBy: { displayOrder: 'asc' },
-      });
-
-      if (nextImage) {
-        await this.prisma.propertyImage.update({
-          where: { id: nextImage.id },
-          data: { isPrimary: true },
-        });
+      const images = await this.propertyRepository.findImagesByPropertyId(propertyId);
+      if (images.length > 0) {
+        await this.propertyRepository.setImagePrimary(images[0].id);
       }
     }
   }

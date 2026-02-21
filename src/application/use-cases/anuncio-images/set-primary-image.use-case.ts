@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 /**
  * Use Case: Definir imagem primária de um anúncio
@@ -13,16 +14,13 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service';
  */
 @Injectable()
 export class SetPrimaryImageUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(ANUNCIO_REPOSITORY) private readonly anuncioRepository: AnuncioRepository,
+  ) {}
 
   async execute(anuncioId: string, imageId: string) {
     // Validar que a imagem existe e pertence ao anúncio
-    const image = await this.prisma.anuncioImage.findFirst({
-      where: {
-        id: imageId,
-        anuncioId,
-      },
-    });
+    const image = await this.anuncioRepository.findImageById(imageId, anuncioId);
 
     if (!image) {
       throw new NotFoundException(
@@ -35,19 +33,9 @@ export class SetPrimaryImageUseCase {
       return image;
     }
 
-    // Transação: remover flag de todas e definir nova primária
-    const [, updatedImage] = await this.prisma.$transaction([
-      // Remover isPrimary de todas as imagens do anúncio
-      this.prisma.anuncioImage.updateMany({
-        where: { anuncioId },
-        data: { isPrimary: false },
-      }),
-      // Definir a nova imagem como primária
-      this.prisma.anuncioImage.update({
-        where: { id: imageId },
-        data: { isPrimary: true },
-      }),
-    ]);
+    // Remover flag de todas e definir nova primária
+    await this.anuncioRepository.clearImagePrimary(anuncioId);
+    const updatedImage = await this.anuncioRepository.setImagePrimary(imageId);
 
     return updatedImage;
   }

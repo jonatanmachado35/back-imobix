@@ -1,6 +1,6 @@
 import { Lead } from '../../domain/entities/lead';
 import { LeadRepository, UpdateLeadData } from '../ports/lead-repository';
-import { LeadNotFoundError } from './lead-errors';
+import { LeadNotFoundError } from '../../domain/entities/lead-errors';
 
 export type UpdateLeadInput = {
   nome?: string;

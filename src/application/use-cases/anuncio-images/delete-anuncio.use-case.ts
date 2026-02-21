@@ -1,20 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
 import { IFileStorageService } from '../../ports/file-storage.interface';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 @Injectable()
 export class DeleteAnuncioUseCase {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(ANUNCIO_REPOSITORY) private readonly anuncioRepository: AnuncioRepository,
     private readonly fileStorage: IFileStorageService,
   ) { }
 
   async execute(anuncioId: string, userId: string, userRole: string): Promise<void> {
     // 1. Buscar anúncio com suas imagens
-    const anuncio = await this.prisma.anuncio.findUnique({
-      where: { id: anuncioId },
-      include: { images: true },
-    });
+    const anuncio = await this.anuncioRepository.findByIdWithImages(anuncioId);
 
     if (!anuncio) {
       throw new NotFoundException('Anúncio não encontrado');
@@ -38,8 +36,6 @@ export class DeleteAnuncioUseCase {
     }
 
     // 4. Deletar anúncio do banco (cascade deleta AnuncioImages)
-    await this.prisma.anuncio.delete({
-      where: { id: anuncioId },
-    });
+    await this.anuncioRepository.delete(anuncioId);
   }
 }

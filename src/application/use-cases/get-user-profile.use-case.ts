@@ -14,6 +14,7 @@ export interface UserProfileOutput {
   phone: string | null;
   avatar: string | null;
   role: string;
+  userType: string;
 }
 
 export class GetUserProfileUseCase {
@@ -32,7 +33,8 @@ export class GetUserProfileUseCase {
       email: user.email,
       phone: user.phone ?? null,
       avatar: user.avatar ?? null,
-      role: user.userRole ?? 'cliente',
+      role: user.role,
+      userType: user.userRole || 'cliente',
     };
   }
 }

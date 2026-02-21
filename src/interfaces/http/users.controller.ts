@@ -37,7 +37,8 @@ export class UsersController {
         id: user.id,
         nome: user.nome,
         email: user.email,
-        userRole: user.userRole,
+        role: user.role,
+        userType: user.userRole || 'cliente',
         createdAt: user.createdAt
       };
     } catch (error) {

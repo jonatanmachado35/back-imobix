@@ -82,6 +82,31 @@ class InMemoryPropertyRepository implements PropertyRepository {
     return false;
   }
 
+  // Image methods - required by interface
+  async findImagesByPropertyId(propertyId: string): Promise<any[]> {
+    return [];
+  }
+
+  async findImageById(imageId: string, propertyId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createImage(data: any): Promise<any> {
+    return { id: 'image-1', ...data };
+  }
+
+  async deleteImage(imageId: string): Promise<void> {
+    // noop for tests
+  }
+
+  async clearImagePrimary(propertyId: string): Promise<void> {
+    // noop for tests
+  }
+
+  async setImagePrimary(imageId: string): Promise<void> {
+    // noop for tests
+  }
+
   addProperty(property: Property): void {
     this.properties.push(property);
   }

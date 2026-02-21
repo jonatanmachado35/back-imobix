@@ -1,4 +1,5 @@
 import { Property } from '../../domain/entities/property';
+import { PropertyImage } from '@prisma/client';
 
 export type CreatePropertyData = {
   ownerId: string;
@@ -49,4 +50,23 @@ export interface PropertyRepository {
   updateStatus(id: string, status: string): Promise<Property>;
   delete(id: string): Promise<void>;
   hasConflictingBooking(propertyId: string, checkIn: Date, checkOut: Date): Promise<boolean>;
+  
+  // Image methods
+  findImagesByPropertyId(propertyId: string): Promise<PropertyImage[]>;
+  findImageById(imageId: string, propertyId: string): Promise<PropertyImage | null>;
+  createImage(data: {
+    propertyId: string;
+    publicId: string;
+    url: string;
+    secureUrl: string;
+    format: string;
+    width?: number;
+    height?: number;
+    bytes?: number;
+    displayOrder?: number;
+    isPrimary?: boolean;
+  }): Promise<PropertyImage>;
+  deleteImage(imageId: string): Promise<void>;
+  clearImagePrimary(propertyId: string): Promise<void>;
+  setImagePrimary(imageId: string): Promise<void>;
 }

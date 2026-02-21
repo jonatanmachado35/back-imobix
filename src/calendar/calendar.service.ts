@@ -1,18 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../infrastructure/database/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { CalendarRepository } from '../application/ports/calendar-repository';
+import { CALENDAR_REPOSITORY } from './calendar.tokens';
 
 @Injectable()
 export class CalendarService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    @Inject(CALENDAR_REPOSITORY) private readonly calendarRepository: CalendarRepository,
+  ) {}
 
   async getEvents(start: string, end: string) {
-    // Assuming ISO date strings
-    const reservas = await this.prisma.reserva.findMany({
-      // where: { checkIn: { gte: start }, checkOut: { lte: end } } // Basic logic
-    });
-    const visitas = await this.prisma.visita.findMany({
-      // where: { data: { gte: start, lte: end } }
-    });
+    const startDate = start ? new Date(start) : undefined;
+    const endDate = end ? new Date(end) : undefined;
+    
+    const reservas = await this.calendarRepository.findReservas(startDate, endDate);
+    const visitas = await this.calendarRepository.findVisitas(startDate, endDate);
 
     return { reservas, visitas };
   }

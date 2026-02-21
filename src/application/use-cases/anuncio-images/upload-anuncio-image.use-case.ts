@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
 import {
   FileUploadDto,
   IFileStorageService,
 } from '../../ports/file-storage.interface';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 /**
  * Use Case: Upload de imagem para anúncio
@@ -22,7 +23,7 @@ export class UploadAnuncioImageUseCase {
   private readonly MAX_IMAGES_PER_ANUNCIO = 20;
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(ANUNCIO_REPOSITORY) private readonly anuncioRepository: AnuncioRepository,
     private readonly fileStorageService: IFileStorageService,
   ) {}
 
@@ -33,10 +34,7 @@ export class UploadAnuncioImageUseCase {
     displayOrder = 0,
   ) {
     // 1. Validar que anúncio existe
-    const anuncio = await this.prisma.anuncio.findUnique({
-      where: { id: anuncioId },
-      include: { images: true },
-    });
+    const anuncio = await this.anuncioRepository.findByIdWithImages(anuncioId);
 
     if (!anuncio) {
       throw new NotFoundException(`Anúncio com ID ${anuncioId} não encontrado`);
@@ -58,26 +56,21 @@ export class UploadAnuncioImageUseCase {
 
       // 4. Se isPrimary=true, remover flag das outras imagens
       if (isPrimary) {
-        await this.prisma.anuncioImage.updateMany({
-          where: { anuncioId },
-          data: { isPrimary: false },
-        });
+        await this.anuncioRepository.clearImagePrimary(anuncioId);
       }
 
       // 5. Salvar metadata no banco de dados
-      createdImage = await this.prisma.anuncioImage.create({
-        data: {
-          anuncioId,
-          publicId: uploadResult.publicId,
-          url: uploadResult.url,
-          secureUrl: uploadResult.secureUrl,
-          format: uploadResult.format,
-          width: uploadResult.width,
-          height: uploadResult.height,
-          bytes: uploadResult.bytes,
-          displayOrder,
-          isPrimary,
-        },
+      createdImage = await this.anuncioRepository.createImage({
+        anuncioId,
+        publicId: uploadResult.publicId,
+        url: uploadResult.url,
+        secureUrl: uploadResult.secureUrl,
+        format: uploadResult.format,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        bytes: uploadResult.bytes,
+        displayOrder,
+        isPrimary,
       });
 
       return createdImage;

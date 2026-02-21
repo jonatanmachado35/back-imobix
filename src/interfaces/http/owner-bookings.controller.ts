@@ -23,7 +23,7 @@ import {
   BookingResponseDto,
   OwnerDashboardResponseDto,
 } from './dto/booking.dto';
-import { Booking } from '../../domain/entities/booking';
+import { BookingMapper } from './mappers/booking.mapper';
 
 @ApiTags('Proprietário - Reservas')
 @Controller('proprietario')
@@ -36,29 +36,6 @@ export class OwnerBookingsController {
     private readonly listBookingsUseCase: ListBookingsUseCase,
     private readonly getOwnerDashboardUseCase: GetOwnerDashboardUseCase,
   ) { }
-
-  private toResponseDto(booking: Booking): BookingResponseDto {
-    return {
-      id: booking.id,
-      propertyId: booking.propertyId,
-      guestId: booking.guestId,
-      ownerId: booking.ownerId,
-      checkIn: booking.checkIn.toISOString(),
-      checkOut: booking.checkOut.toISOString(),
-      guests: booking.guests,
-      adults: booking.adults,
-      children: booking.children,
-      totalNights: booking.totalNights,
-      pricePerNight: booking.pricePerNight,
-      cleaningFee: booking.cleaningFee,
-      serviceFee: booking.serviceFee,
-      totalPrice: booking.totalPrice,
-      status: booking.status,
-      message: booking.message,
-      createdAt: booking.createdAt.toISOString(),
-      updatedAt: booking.updatedAt.toISOString(),
-    };
-  }
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Obter dashboard do proprietário' })
@@ -73,7 +50,7 @@ export class OwnerBookingsController {
       confirmedBookings: dashboard.confirmedBookings,
       completedBookings: dashboard.completedBookings,
       totalRevenue: dashboard.totalRevenue,
-      recentBookings: dashboard.recentBookings.map((b) => this.toResponseDto(b)),
+      recentBookings: dashboard.recentBookings.map((b) => BookingMapper.toResponseDto(b)),
     };
   }
 
@@ -85,7 +62,7 @@ export class OwnerBookingsController {
       userId: req.user.userId,
       role: 'owner',
     });
-    return bookings.map((b) => this.toResponseDto(b));
+    return bookings.map((b) => BookingMapper.toResponseDto(b));
   }
 
   @Patch('bookings/:id/confirm')
@@ -102,7 +79,7 @@ export class OwnerBookingsController {
       bookingId: id,
       ownerId: req.user.userId,
     });
-    return this.toResponseDto(booking);
+    return BookingMapper.toResponseDto(booking);
   }
 
   @Patch('bookings/:id/cancel')
@@ -120,6 +97,6 @@ export class OwnerBookingsController {
       userId: req.user.userId,
       reason: 'Cancelado pelo proprietário',
     });
-    return this.toResponseDto(booking);
+    return BookingMapper.toResponseDto(booking);
   }
 }

@@ -1,31 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../infrastructure/database/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { FinanceRepository } from '../application/ports/finance-repository';
+import { FINANCE_REPOSITORY } from './finance.tokens';
 
 @Injectable()
 export class FinanceService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    @Inject(FINANCE_REPOSITORY) private readonly financeRepository: FinanceRepository,
+  ) {}
 
   async findAll(filters: any) {
-    // Implement filtering logic here based on 'filters'
-    // For now returning all for simplicity
-    return this.prisma.transacao.findMany();
+    return this.financeRepository.findAll(filters);
   }
 
   async getSummary() {
-    // Aggregate calculations
-    const entrada = await this.prisma.transacao.aggregate({
-      _sum: { valor: true },
-      where: { tipo: 'ENTRADA', status: 'PAGO' }
-    });
-    const saida = await this.prisma.transacao.aggregate({
-      _sum: { valor: true },
-      where: { tipo: 'SAIDA', status: 'PAGO' } // Using PAGO for realized expenses
-    });
-
-    return {
-      receitas: entrada._sum.valor || 0,
-      despesas: saida._sum.valor || 0,
-      saldo: (Number(entrada._sum.valor || 0) - Number(saida._sum.valor || 0))
-    };
+    return this.financeRepository.findResumo();
   }
 }

@@ -9,12 +9,15 @@ import { ListAnuncioImagesUseCase } from '../application/use-cases/anuncio-image
 import { SetPrimaryImageUseCase } from '../application/use-cases/anuncio-images/set-primary-image.use-case';
 import { CreateAnuncioWithImagesUseCase } from '../application/use-cases/anuncio-images/create-anuncio-with-images.use-case';
 import { DeleteAnuncioUseCase } from '../application/use-cases/anuncio-images/delete-anuncio.use-case';
+import { PrismaAnuncioRepository } from '../infrastructure/database/prisma-anuncio.repository';
+import { ANUNCIO_REPOSITORY } from './real-estate.tokens';
 
 @Module({
   imports: [DatabaseModule, CloudinaryModule],
   controllers: [AnunciosController],
   providers: [
     RealEstateService,
+    { provide: ANUNCIO_REPOSITORY, useClass: PrismaAnuncioRepository },
     UploadAnuncioImageUseCase,
     DeleteAnuncioImageUseCase,
     ListAnuncioImagesUseCase,
@@ -22,5 +25,6 @@ import { DeleteAnuncioUseCase } from '../application/use-cases/anuncio-images/de
     CreateAnuncioWithImagesUseCase,
     DeleteAnuncioUseCase,
   ],
+  exports: [RealEstateService, ANUNCIO_REPOSITORY],
 })
 export class RealEstateModule { }
