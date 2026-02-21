@@ -1,7 +1,7 @@
 import { ContactLeadUseCase } from './contact-lead.use-case';
 import { LeadRepository } from '../ports/lead-repository';
 import { Lead, LeadStatus } from '../../domain/entities/lead';
-import { LeadNotFoundError } from './lead-errors';
+import { LeadNotFoundError } from '../../domain/entities/lead-errors';
 
 describe('ContactLeadUseCase', () => {
   let useCase: ContactLeadUseCase;

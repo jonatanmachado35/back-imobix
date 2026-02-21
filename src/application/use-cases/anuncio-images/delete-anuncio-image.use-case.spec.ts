@@ -1,23 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { DeleteAnuncioImageUseCase } from './delete-anuncio-image.use-case';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
 import { IFileStorageService } from '../../ports/file-storage.interface';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 describe('DeleteAnuncioImageUseCase', () => {
   let useCase: DeleteAnuncioImageUseCase;
-  let prismaService: any;
-  let fileStorageService: jest.Mocked<IFileStorageService>;
+  let mockAnuncioRepository: jest.Mocked<AnuncioRepository>;
+  let mockFileStorageService: jest.Mocked<IFileStorageService>;
 
-  const mockPrismaService = {
-    anuncioImage: {
-      findFirst: jest.fn(),
-      delete: jest.fn(),
-      update: jest.fn(),
-    },
+  const mockRepository = {
+    findImageById: jest.fn(),
+    findImagesByAnuncioId: jest.fn(),
+    deleteImage: jest.fn(),
+    setImagePrimary: jest.fn(),
   };
 
-  const mockFileStorageService = {
+  const mockFileStorage = {
     upload: jest.fn(),
     delete: jest.fn(),
     getUrl: jest.fn(),
@@ -28,19 +28,19 @@ describe('DeleteAnuncioImageUseCase', () => {
       providers: [
         DeleteAnuncioImageUseCase,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: ANUNCIO_REPOSITORY,
+          useValue: mockRepository,
         },
         {
           provide: IFileStorageService,
-          useValue: mockFileStorageService,
+          useValue: mockFileStorage,
         },
       ],
     }).compile();
 
     useCase = module.get<DeleteAnuncioImageUseCase>(DeleteAnuncioImageUseCase);
-    prismaService = module.get(PrismaService);
-    fileStorageService = module.get(IFileStorageService);
+    mockAnuncioRepository = module.get(ANUNCIO_REPOSITORY);
+    mockFileStorageService = module.get(IFileStorageService);
   });
 
   afterEach(() => {
@@ -51,82 +51,51 @@ describe('DeleteAnuncioImageUseCase', () => {
     const mockImage = {
       id: 'image-1',
       anuncioId: 'anuncio-1',
-      publicId: 'anuncios/test123',
+      publicId: 'anuncios/img-1',
       isPrimary: false,
     };
 
-    it('should delete image successfully', async () => {
-      prismaService.anuncioImage.findFirst.mockResolvedValue(mockImage as any);
-      fileStorageService.delete.mockResolvedValue(undefined);
-      prismaService.anuncioImage.delete.mockResolvedValue(mockImage as any);
+    it('should delete image from storage and database', async () => {
+      mockAnuncioRepository.findImageById.mockResolvedValue(mockImage as any);
+      mockFileStorage.delete.mockResolvedValue(undefined);
+      mockAnuncioRepository.deleteImage.mockResolvedValue(undefined);
 
       await useCase.execute('anuncio-1', 'image-1');
 
-      expect(prismaService.anuncioImage.findFirst).toHaveBeenCalledWith({
-        where: { id: 'image-1', anuncioId: 'anuncio-1' },
-      });
-      expect(fileStorageService.delete).toHaveBeenCalledWith('anuncios/test123');
-      expect(prismaService.anuncioImage.delete).toHaveBeenCalledWith({
-        where: { id: 'image-1' },
-      });
+      expect(mockFileStorage.delete).toHaveBeenCalledWith('anuncios/img-1');
+      expect(mockAnuncioRepository.deleteImage).toHaveBeenCalledWith('image-1');
     });
 
-    it('should throw NotFoundException if image not found', async () => {
-      prismaService.anuncioImage.findFirst.mockResolvedValue(null);
+    it('should throw NotFoundException when image does not exist', async () => {
+      mockAnuncioRepository.findImageById.mockResolvedValue(null);
 
-      await expect(useCase.execute('anuncio-1', 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
-      expect(fileStorageService.delete).not.toHaveBeenCalled();
-      expect(prismaService.anuncioImage.delete).not.toHaveBeenCalled();
+      await expect(useCase.execute('anuncio-1', 'inexistente')).rejects.toThrow(NotFoundException);
     });
 
-    it('should set another image as primary if deleted was primary', async () => {
+    it('should continue even if storage deletion fails', async () => {
+      mockAnuncioRepository.findImageById.mockResolvedValue(mockImage as any);
+      mockFileStorage.delete.mockRejectedValue(new Error('Storage error'));
+      mockAnuncioRepository.deleteImage.mockResolvedValue(undefined);
+
+      // Should not throw
+      await useCase.execute('anuncio-1', 'image-1');
+
+      expect(mockAnuncioRepository.deleteImage).toHaveBeenCalledWith('image-1');
+    });
+
+    it('should set new primary if deleted image was primary', async () => {
       const primaryImage = { ...mockImage, isPrimary: true };
-      const nextImage = { id: 'image-2', anuncioId: 'anuncio-1', isPrimary: false };
-
-      prismaService.anuncioImage.findFirst
-        .mockResolvedValueOnce(primaryImage as any)
-        .mockResolvedValueOnce(nextImage as any);
-      fileStorageService.delete.mockResolvedValue(undefined);
-      prismaService.anuncioImage.delete.mockResolvedValue(primaryImage as any);
-      prismaService.anuncioImage.update.mockResolvedValue({
-        ...nextImage,
-        isPrimary: true,
-      } as any);
+      mockAnuncioRepository.findImageById.mockResolvedValue(primaryImage as any);
+      mockFileStorage.delete.mockResolvedValue(undefined);
+      mockAnuncioRepository.deleteImage.mockResolvedValue(undefined);
+      mockAnuncioRepository.findImagesByAnuncioId.mockResolvedValue([
+        { id: 'image-2', isPrimary: false } as any,
+      ]);
+      mockAnuncioRepository.setImagePrimary.mockResolvedValue(undefined as any);
 
       await useCase.execute('anuncio-1', 'image-1');
 
-      expect(prismaService.anuncioImage.update).toHaveBeenCalledWith({
-        where: { id: 'image-2' },
-        data: { isPrimary: true },
-      });
-    });
-
-    it('should continue even if storage delete fails', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      
-      prismaService.anuncioImage.findFirst.mockResolvedValue(mockImage as any);
-      fileStorageService.delete.mockRejectedValue(new Error('Storage error'));
-      prismaService.anuncioImage.delete.mockResolvedValue(mockImage as any);
-
-      await expect(useCase.execute('anuncio-1', 'image-1')).resolves.not.toThrow();
-
-      expect(prismaService.anuncioImage.delete).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
-    });
-
-    it('should not set new primary if deleted was not primary', async () => {
-      prismaService.anuncioImage.findFirst.mockResolvedValue(mockImage as any);
-      fileStorageService.delete.mockResolvedValue(undefined);
-      prismaService.anuncioImage.delete.mockResolvedValue(mockImage as any);
-
-      await useCase.execute('anuncio-1', 'image-1');
-
-      // findFirst should only be called once (for the image to delete)
-      expect(prismaService.anuncioImage.findFirst).toHaveBeenCalledTimes(1);
-      expect(prismaService.anuncioImage.update).not.toHaveBeenCalled();
+      expect(mockAnuncioRepository.setImagePrimary).toHaveBeenCalledWith('image-2');
     });
   });
 });

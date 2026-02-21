@@ -35,6 +35,12 @@ describe('CreatePropertyUseCase', () => {
       updateStatus: jest.fn(),
       delete: jest.fn(),
       hasConflictingBooking: jest.fn(),
+      findImagesByPropertyId: jest.fn(),
+      findImageById: jest.fn(),
+      createImage: jest.fn(),
+      deleteImage: jest.fn(),
+      clearImagePrimary: jest.fn(),
+      setImagePrimary: jest.fn(),
     };
 
     useCase = new CreatePropertyUseCase(mockPropertyRepository);
@@ -44,7 +50,7 @@ describe('CreatePropertyUseCase', () => {
     it('should create a TEMPORADA property successfully', async () => {
       const input: CreatePropertyInput = {
         ownerId: 'user-123',
-        type: 'TEMPORADA',
+        type: PropertyType.TEMPORADA,
         title: 'Casa na Praia',
         description: 'Linda casa',
         pricePerNight: 500,
@@ -65,7 +71,7 @@ describe('CreatePropertyUseCase', () => {
       expect(result.type).toBe(PropertyType.TEMPORADA);
       expect(mockPropertyRepository.create).toHaveBeenCalledWith(expect.objectContaining({
         ownerId: 'user-123',
-        type: 'TEMPORADA',
+        type: PropertyType.TEMPORADA,
         title: 'Casa na Praia',
       }));
     });
@@ -87,7 +93,7 @@ describe('CreatePropertyUseCase', () => {
 
       const input: CreatePropertyInput = {
         ownerId: 'user-123',
-        type: 'VENDA',
+        type: PropertyType.VENDA,
         title: 'Apartamento Centro',
         price: 500000,
         city: 'São Paulo',
@@ -108,7 +114,7 @@ describe('CreatePropertyUseCase', () => {
     it('should throw if title is empty', async () => {
       const input: CreatePropertyInput = {
         ownerId: 'user-123',
-        type: 'TEMPORADA',
+        type: PropertyType.TEMPORADA,
         title: '',
         pricePerNight: 500,
       };
@@ -119,7 +125,7 @@ describe('CreatePropertyUseCase', () => {
     it('should throw if TEMPORADA without pricePerNight', async () => {
       const input: CreatePropertyInput = {
         ownerId: 'user-123',
-        type: 'TEMPORADA',
+        type: PropertyType.TEMPORADA,
         title: 'Casa na Praia',
       };
 
@@ -129,7 +135,7 @@ describe('CreatePropertyUseCase', () => {
     it('should throw if VENDA without price', async () => {
       const input: CreatePropertyInput = {
         ownerId: 'user-123',
-        type: 'VENDA',
+        type: PropertyType.VENDA,
         title: 'Apartamento',
       };
 

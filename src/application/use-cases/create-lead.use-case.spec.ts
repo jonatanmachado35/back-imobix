@@ -1,7 +1,7 @@
 import { Lead, LeadStatus } from '../../domain/entities/lead';
 import { CreateLeadData, LeadRepository } from '../ports/lead-repository';
 import { CreateLeadUseCase, CreateLeadInput } from './create-lead.use-case';
-import { LeadAlreadyExistsError } from './lead-errors';
+import { LeadAlreadyExistsError } from '../../domain/entities/lead-errors';
 
 class InMemoryLeadRepository implements LeadRepository {
   private items: Lead[] = [];

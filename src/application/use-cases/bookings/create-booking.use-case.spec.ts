@@ -165,7 +165,7 @@ class InMemoryPropertyRepository implements PropertyRepository {
     return property;
   }
 
-  async updateStatus(id: string, status: string): Promise<Property> {
+  async updateStatus(id: string, status: PropertyStatus): Promise<Property> {
     const property = await this.findById(id);
     if (!property) throw new Error('Property not found');
 
@@ -200,6 +200,31 @@ class InMemoryPropertyRepository implements PropertyRepository {
     checkOut: Date,
   ): Promise<boolean> {
     return false;
+  }
+
+  // Image methods - required by interface
+  async findImagesByPropertyId(propertyId: string): Promise<any[]> {
+    return [];
+  }
+
+  async findImageById(imageId: string, propertyId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createImage(data: any): Promise<any> {
+    return { id: 'image-1', ...data };
+  }
+
+  async deleteImage(imageId: string): Promise<void> {
+    // noop for tests
+  }
+
+  async clearImagePrimary(propertyId: string): Promise<void> {
+    // noop for tests
+  }
+
+  async setImagePrimary(imageId: string): Promise<any> {
+    return { id: imageId, isPrimary: true };
   }
 
   // Helper for tests

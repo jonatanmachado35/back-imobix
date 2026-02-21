@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Property, PropertyType, PropertyStatus, PropertyCategory } from '../../domain/entities/property';
 import { PropertyRepository, CreatePropertyData, UpdatePropertyData, PropertyFilters } from '../../application/ports/property-repository';
 import { PrismaService } from './prisma.service';
+import { PropertyImage } from '@prisma/client';
 
 @Injectable()
 export class PrismaPropertyRepository implements PropertyRepository {
@@ -119,7 +120,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
     const property = await this.prisma.property.create({
       data: {
         ownerId: data.ownerId,
-        type: data.type as any,
+        type: data.type,
         title: data.title,
         description: data.description,
         price: data.price,
@@ -140,7 +141,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
         checkInTime: data.checkInTime,
         checkOutTime: data.checkOutTime,
         houseRules: data.houseRules || [],
-        category: data.category as any,
+        category: data.category,
         blockedDates: data.blockedDates || [],
       },
     });
@@ -171,17 +172,17 @@ export class PrismaPropertyRepository implements PropertyRepository {
         ...(data.checkInTime !== undefined && { checkInTime: data.checkInTime }),
         ...(data.checkOutTime !== undefined && { checkOutTime: data.checkOutTime }),
         ...(data.houseRules !== undefined && { houseRules: data.houseRules }),
-        ...(data.category !== undefined && { category: data.category as any }),
+        ...(data.category !== undefined && { category: data.category }),
         ...(data.blockedDates !== undefined && { blockedDates: data.blockedDates }),
       },
     });
     return this.toDomain(property);
   }
 
-  async updateStatus(id: string, status: string): Promise<Property> {
+  async updateStatus(id: string, status: PropertyStatus): Promise<Property> {
     const property = await this.prisma.property.update({
       where: { id },
-      data: { status: status as any },
+      data: { status },
     });
     return this.toDomain(property);
   }
@@ -204,5 +205,68 @@ export class PrismaPropertyRepository implements PropertyRepository {
       },
     });
     return count > 0;
+  }
+
+  // Image methods
+  async findImagesByPropertyId(propertyId: string): Promise<PropertyImage[]> {
+    return this.prisma.propertyImage.findMany({
+      where: { propertyId },
+      orderBy: { displayOrder: 'asc' },
+    });
+  }
+
+  async findImageById(imageId: string, propertyId: string): Promise<PropertyImage | null> {
+    return this.prisma.propertyImage.findFirst({
+      where: {
+        id: imageId,
+        propertyId,
+      },
+    });
+  }
+
+  async createImage(data: {
+    propertyId: string;
+    publicId: string;
+    url: string;
+    secureUrl: string;
+    format: string;
+    width?: number;
+    height?: number;
+    bytes?: number;
+    displayOrder?: number;
+    isPrimary?: boolean;
+  }): Promise<PropertyImage> {
+    return this.prisma.propertyImage.create({
+      data: {
+        propertyId: data.propertyId,
+        publicId: data.publicId,
+        url: data.url,
+        secureUrl: data.secureUrl,
+        format: data.format,
+        width: data.width,
+        height: data.height,
+        bytes: data.bytes,
+        displayOrder: data.displayOrder || 0,
+        isPrimary: data.isPrimary || false,
+      },
+    });
+  }
+
+  async deleteImage(imageId: string): Promise<void> {
+    await this.prisma.propertyImage.delete({ where: { id: imageId } });
+  }
+
+  async clearImagePrimary(propertyId: string): Promise<void> {
+    await this.prisma.propertyImage.updateMany({
+      where: { propertyId },
+      data: { isPrimary: false },
+    });
+  }
+
+  async setImagePrimary(imageId: string): Promise<PropertyImage> {
+    return this.prisma.propertyImage.update({
+      where: { id: imageId },
+      data: { isPrimary: true },
+    });
   }
 }

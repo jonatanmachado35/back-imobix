@@ -25,7 +25,7 @@ import {
   CancelBookingDto,
   BookingResponseDto,
 } from './dto/booking.dto';
-import { Booking } from '../../domain/entities/booking';
+import { BookingMapper } from './mappers/booking.mapper';
 
 @ApiTags('Reservas')
 @Controller('bookings')
@@ -35,29 +35,6 @@ export class BookingsController {
     private readonly cancelBookingUseCase: CancelBookingUseCase,
     private readonly listBookingsUseCase: ListBookingsUseCase,
   ) { }
-
-  private toResponseDto(booking: Booking): BookingResponseDto {
-    return {
-      id: booking.id,
-      propertyId: booking.propertyId,
-      guestId: booking.guestId,
-      ownerId: booking.ownerId,
-      checkIn: booking.checkIn.toISOString(),
-      checkOut: booking.checkOut.toISOString(),
-      guests: booking.guests,
-      adults: booking.adults,
-      children: booking.children,
-      totalNights: booking.totalNights,
-      pricePerNight: booking.pricePerNight,
-      cleaningFee: booking.cleaningFee,
-      serviceFee: booking.serviceFee,
-      totalPrice: booking.totalPrice,
-      status: booking.status,
-      message: booking.message,
-      createdAt: booking.createdAt.toISOString(),
-      updatedAt: booking.updatedAt.toISOString(),
-    };
-  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -81,7 +58,7 @@ export class BookingsController {
       children: dto.children,
       message: dto.message,
     });
-    return this.toResponseDto(booking);
+    return BookingMapper.toResponseDto(booking);
   }
 
   @Get('my')
@@ -94,7 +71,7 @@ export class BookingsController {
       userId: req.user.userId,
       role: 'guest',
     });
-    return bookings.map((b) => this.toResponseDto(b));
+    return bookings.map((b) => BookingMapper.toResponseDto(b));
   }
 
   @Patch(':id/cancel')
@@ -116,6 +93,6 @@ export class BookingsController {
       userId: req.user.userId,
       reason: dto.reason,
     });
-    return this.toResponseDto(booking);
+    return BookingMapper.toResponseDto(booking);
   }
 }

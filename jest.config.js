@@ -21,5 +21,6 @@ module.exports = {
     }
   },
   testEnvironment: 'node',
-  setupFiles: ['<rootDir>/test/jest.setup.ts']
+  setupFiles: ['<rootDir>/test/jest.setup.ts'],
+  maxWorkers: 1 // Execute tests sequentially to avoid exceeding database connection limits
 };

@@ -38,7 +38,7 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async findByResetToken(token: string): Promise<User | null> {
-    const user = await (this.prisma.user as any).findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { resetPasswordToken: token }
     });
     return user ? this.toDomain(user) : null;
@@ -86,7 +86,7 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async save(user: User): Promise<void> {
-    await (this.prisma.user as any).update({
+    await this.prisma.user.update({
       where: { id: user.id },
       data: {
         nome: user.nome,

@@ -22,6 +22,7 @@ export interface UserProfileOutput {
   phone: string | null;
   avatar: string | null;
   role: string;
+  userType: string;
 }
 
 export class UpdateUserProfileUseCase {
@@ -56,7 +57,8 @@ export class UpdateUserProfileUseCase {
       email: updatedUser.email,
       phone: updatedUser.phone ?? null,
       avatar: updatedUser.avatar ?? null,
-      role: updatedUser.userRole ?? 'cliente',
+      role: updatedUser.role,
+      userType: updatedUser.userRole || 'cliente',
     };
   }
 }

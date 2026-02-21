@@ -1,7 +1,7 @@
 import { ImportLeadsFromCsvUseCase } from './import-leads-from-csv.use-case';
 import { LeadRepository } from '../ports/lead-repository';
 import { Lead, LeadStatus } from '../../domain/entities/lead';
-import { LeadAlreadyExistsError } from './lead-errors';
+import { LeadAlreadyExistsError } from '../../domain/entities/lead-errors';
 
 describe('ImportLeadsFromCsvUseCase', () => {
   let useCase: ImportLeadsFromCsvUseCase;

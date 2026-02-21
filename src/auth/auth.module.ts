@@ -11,7 +11,6 @@ import { UserRepository } from '../application/ports/user-repository';
 import { PasswordHasher } from '../application/ports/password-hasher';
 import { TokenGenerator } from '../application/ports/token-generator';
 import { LoginUseCase } from '../application/use-cases/login.use-case';
-import { RegisterUserUseCase } from '../application/use-cases/register-user.use-case';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
 import { ChangePasswordUseCase } from '../application/use-cases/password/change-password.use-case';
@@ -28,8 +27,8 @@ import { UsersModule } from '../users/users.module';
     UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'secret',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any }
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1d' as any }
     })
   ],
   controllers: [AuthController],
@@ -42,15 +41,6 @@ import { UsersModule } from '../users/users.module';
         passwordHasher: PasswordHasher,
         tokenGenerator: TokenGenerator
       ) => new LoginUseCase(userRepository, passwordHasher, tokenGenerator),
-      inject: [USER_REPOSITORY, PASSWORD_HASHER, TOKEN_GENERATOR]
-    },
-    {
-      provide: RegisterUserUseCase,
-      useFactory: (
-        userRepository: UserRepository,
-        passwordHasher: PasswordHasher,
-        tokenGenerator: TokenGenerator
-      ) => new RegisterUserUseCase(userRepository, passwordHasher, tokenGenerator),
       inject: [USER_REPOSITORY, PASSWORD_HASHER, TOKEN_GENERATOR]
     },
     {

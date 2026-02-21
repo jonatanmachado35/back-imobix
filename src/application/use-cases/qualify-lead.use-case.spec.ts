@@ -1,7 +1,7 @@
 import { Lead, LeadStatus } from '../../domain/entities/lead';
 import { CreateLeadData, LeadRepository } from '../ports/lead-repository';
 import { QualifyLeadUseCase } from './qualify-lead.use-case';
-import { LeadNotFoundError } from './lead-errors';
+import { LeadNotFoundError } from '../../domain/entities/lead-errors';
 
 class InMemoryLeadRepository implements LeadRepository {
   private items: Lead[] = [];

@@ -1,26 +1,11 @@
 import { IsString, IsNumber, IsOptional, IsEnum, IsBoolean, IsArray, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum PropertyTypeDto {
-  VENDA = 'VENDA',
-  ALUGUEL = 'ALUGUEL',
-  TEMPORADA = 'TEMPORADA',
-}
-
-export enum PropertyCategoryDto {
-  CHALE = 'CHALE',
-  PRAIA = 'PRAIA',
-  FAZENDA = 'FAZENDA',
-  SITIO = 'SITIO',
-  LUXO = 'LUXO',
-  CASA = 'CASA',
-  APARTAMENTO = 'APARTAMENTO',
-}
+import { PropertyType, PropertyCategory } from '../../../domain/entities/property';
 
 export class CreatePropertyDto {
-  @ApiProperty({ enum: PropertyTypeDto, example: 'TEMPORADA' })
-  @IsEnum(PropertyTypeDto)
-  type: PropertyTypeDto;
+  @ApiProperty({ enum: PropertyType, example: 'TEMPORADA' })
+  @IsEnum(PropertyType)
+  type: PropertyType;
 
   @ApiProperty({ example: 'Casa na Praia de Jurerê' })
   @IsString()
@@ -132,10 +117,10 @@ export class CreatePropertyDto {
   @IsString({ each: true })
   houseRules?: string[];
 
-  @ApiProperty({ required: false, enum: PropertyCategoryDto, example: 'PRAIA' })
+  @ApiProperty({ required: false, enum: PropertyCategory, example: 'PRAIA' })
   @IsOptional()
-  @IsEnum(PropertyCategoryDto)
-  category?: PropertyCategoryDto;
+  @IsEnum(PropertyCategory)
+  category?: PropertyCategory;
 }
 
 export class UpdatePropertyDto {

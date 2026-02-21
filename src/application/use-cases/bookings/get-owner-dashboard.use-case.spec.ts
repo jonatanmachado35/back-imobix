@@ -81,7 +81,7 @@ class InMemoryPropertyRepository implements PropertyRepository {
     throw new Error('Not implemented');
   }
 
-  async updateStatus(id: string, status: string): Promise<Property> {
+  async updateStatus(id: string, status: PropertyStatus): Promise<Property> {
     throw new Error('Not implemented');
   }
 
@@ -91,6 +91,31 @@ class InMemoryPropertyRepository implements PropertyRepository {
 
   async hasConflictingBooking(): Promise<boolean> {
     return false;
+  }
+
+  // Image methods - required by interface
+  async findImagesByPropertyId(propertyId: string): Promise<any[]> {
+    return [];
+  }
+
+  async findImageById(imageId: string, propertyId: string): Promise<any | null> {
+    return null;
+  }
+
+  async createImage(data: any): Promise<any> {
+    return { id: 'image-1', ...data };
+  }
+
+  async deleteImage(imageId: string): Promise<void> {
+    // noop for tests
+  }
+
+  async clearImagePrimary(propertyId: string): Promise<void> {
+    // noop for tests
+  }
+
+  async setImagePrimary(imageId: string): Promise<any> {
+    return { id: imageId, isPrimary: true };
   }
 
   addProperty(property: Property): void {

@@ -1,16 +1,15 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { PropertyRepository } from '../../ports/property-repository';
+import { PROPERTY_REPOSITORY } from '../../../properties/properties.tokens';
 
 @Injectable()
 export class SetPrimaryPropertyImageUseCase {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    @Inject(PROPERTY_REPOSITORY) private readonly propertyRepository: PropertyRepository
+  ) { }
 
   async execute(propertyId: string, imageId: string, ownerId: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.propertyRepository.findById(propertyId);
 
     if (!property) {
       throw new NotFoundException(`Property com ID ${propertyId} não encontrada`);
@@ -20,12 +19,7 @@ export class SetPrimaryPropertyImageUseCase {
       throw new ForbiddenException('You are not the owner of this property');
     }
 
-    const image = await this.prisma.propertyImage.findFirst({
-      where: {
-        id: imageId,
-        propertyId,
-      },
-    });
+    const image = await this.propertyRepository.findImageById(imageId, propertyId);
 
     if (!image) {
       throw new NotFoundException(
@@ -37,16 +31,8 @@ export class SetPrimaryPropertyImageUseCase {
       return image;
     }
 
-    const [, updatedImage] = await this.prisma.$transaction([
-      this.prisma.propertyImage.updateMany({
-        where: { propertyId },
-        data: { isPrimary: false },
-      }),
-      this.prisma.propertyImage.update({
-        where: { id: imageId },
-        data: { isPrimary: true },
-      }),
-    ]);
+    await this.propertyRepository.clearImagePrimary(propertyId);
+    const updatedImage = await this.propertyRepository.setImagePrimary(imageId);
 
     return updatedImage;
   }

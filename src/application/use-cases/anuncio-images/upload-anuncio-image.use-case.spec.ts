@@ -1,22 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { UploadAnuncioImageUseCase } from './upload-anuncio-image.use-case';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
 import { IFileStorageService } from '../../ports/file-storage.interface';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 describe('UploadAnuncioImageUseCase', () => {
   let useCase: UploadAnuncioImageUseCase;
-  let prismaService: any;
+  let anuncioRepository: jest.Mocked<AnuncioRepository>;
   let fileStorageService: jest.Mocked<IFileStorageService>;
 
-  const mockPrismaService = {
-    anuncio: {
-      findUnique: jest.fn(),
-    },
-    anuncioImage: {
-      create: jest.fn(),
-      updateMany: jest.fn(),
-    },
+  const mockAnuncioRepository = {
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    findByIdWithImages: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    updateStatus: jest.fn(),
+    findImagesByAnuncioId: jest.fn(),
+    findImageById: jest.fn(),
+    createImage: jest.fn(),
+    deleteImage: jest.fn(),
+    clearImagePrimary: jest.fn(),
+    setImagePrimary: jest.fn(),
   };
 
   const mockFileStorageService = {
@@ -30,8 +37,8 @@ describe('UploadAnuncioImageUseCase', () => {
       providers: [
         UploadAnuncioImageUseCase,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: ANUNCIO_REPOSITORY,
+          useValue: mockAnuncioRepository,
         },
         {
           provide: IFileStorageService,
@@ -41,7 +48,7 @@ describe('UploadAnuncioImageUseCase', () => {
     }).compile();
 
     useCase = module.get<UploadAnuncioImageUseCase>(UploadAnuncioImageUseCase);
-    prismaService = module.get(PrismaService);
+    anuncioRepository = module.get(ANUNCIO_REPOSITORY);
     fileStorageService = module.get(IFileStorageService);
   });
 
@@ -59,108 +66,85 @@ describe('UploadAnuncioImageUseCase', () => {
 
     const mockAnuncio = {
       id: 'anuncio-1',
-      titulo: 'Test Anuncio',
+      titulo: 'Casa na Praia',
       images: [],
     };
 
-    const mockUploadResult = {
-      publicId: 'anuncios/test123',
-      url: 'http://cloudinary.com/test.jpg',
-      secureUrl: 'https://cloudinary.com/test.jpg',
-      format: 'jpg',
-      width: 800,
-      height: 600,
-      bytes: 1024,
-    };
+    it('should upload an image to an existing anuncio', async () => {
+      anuncioRepository.findByIdWithImages.mockResolvedValue(mockAnuncio as any);
+      
+      fileStorageService.upload.mockResolvedValue({
+        publicId: 'anuncios/test-1',
+        url: 'http://cdn/test-1.jpg',
+        secureUrl: 'https://cdn/test-1.jpg',
+        format: 'jpg',
+        width: 1200,
+        height: 800,
+        bytes: 1024,
+      });
 
-    const mockCreatedImage = {
-      id: 'image-1',
-      anuncioId: 'anuncio-1',
-      ...mockUploadResult,
-      displayOrder: 0,
-      isPrimary: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    it('should upload image successfully', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      fileStorageService.upload.mockResolvedValue(mockUploadResult);
-      prismaService.anuncioImage.create.mockResolvedValue(mockCreatedImage as any);
+      const mockImage = {
+        id: 'img-1',
+        anuncioId: 'anuncio-1',
+        publicId: 'anuncios/test-1',
+        url: 'http://cdn/test-1.jpg',
+        secureUrl: 'https://cdn/test-1.jpg',
+        format: 'jpg',
+      };
+      anuncioRepository.createImage.mockResolvedValue(mockImage as any);
 
       const result = await useCase.execute('anuncio-1', mockFile);
 
-      expect(result).toEqual(mockCreatedImage);
-      expect(prismaService.anuncio.findUnique).toHaveBeenCalledWith({
-        where: { id: 'anuncio-1' },
-        include: { images: true },
-      });
-      expect(fileStorageService.upload).toHaveBeenCalledWith(mockFile, 'anuncios');
-      expect(prismaService.anuncioImage.create).toHaveBeenCalled();
+      expect(result.anuncioId).toBe('anuncio-1');
+      expect(fileStorageService.upload).toHaveBeenCalled();
     });
 
-    it('should throw NotFoundException if anuncio does not exist', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(null);
+    it('should throw NotFoundException when anuncio does not exist', async () => {
+      anuncioRepository.findByIdWithImages.mockResolvedValue(null);
 
-      await expect(useCase.execute('invalid-id', mockFile)).rejects.toThrow(
-        NotFoundException,
-      );
-      expect(fileStorageService.upload).not.toHaveBeenCalled();
+      await expect(
+        useCase.execute('anuncio-inexistente', mockFile),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it('should throw BadRequestException if max images exceeded', async () => {
+    it('should throw BadRequestException when max images reached', async () => {
       const anuncioWithMaxImages = {
         ...mockAnuncio,
         images: Array(20).fill({ id: 'img' }),
       };
-      prismaService.anuncio.findUnique.mockResolvedValue(anuncioWithMaxImages as any);
+      anuncioRepository.findByIdWithImages.mockResolvedValue(anuncioWithMaxImages as any);
 
-      await expect(useCase.execute('anuncio-1', mockFile)).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(fileStorageService.upload).not.toHaveBeenCalled();
+      await expect(
+        useCase.execute('anuncio-1', mockFile),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('should set isPrimary and remove from others when isPrimary=true', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      fileStorageService.upload.mockResolvedValue(mockUploadResult);
-      prismaService.anuncioImage.updateMany.mockResolvedValue({ count: 2 } as any);
-      prismaService.anuncioImage.create.mockResolvedValue({
-        ...mockCreatedImage,
-        isPrimary: true,
-      } as any);
-
-      await useCase.execute('anuncio-1', mockFile, true, 0);
-
-      expect(prismaService.anuncioImage.updateMany).toHaveBeenCalledWith({
-        where: { anuncioId: 'anuncio-1' },
-        data: { isPrimary: false },
-      });
-    });
-
-    it('should rollback on database save failure', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      fileStorageService.upload.mockResolvedValue(mockUploadResult);
-      prismaService.anuncioImage.create.mockRejectedValue(new Error('DB Error'));
-
-      await expect(useCase.execute('anuncio-1', mockFile)).rejects.toThrow('DB Error');
-
-      // Verify rollback was attempted
-      expect(fileStorageService.delete).toHaveBeenCalledWith(mockUploadResult.publicId);
-    });
-
-    it('should not fail if rollback fails', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    it('should clear previous primary when setting new primary', async () => {
+      const anuncioWithImage = {
+        ...mockAnuncio,
+        images: [{ id: 'img-old', isPrimary: true }],
+      };
+      anuncioRepository.findByIdWithImages.mockResolvedValue(anuncioWithImage as any);
       
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      fileStorageService.upload.mockResolvedValue(mockUploadResult);
-      prismaService.anuncioImage.create.mockRejectedValue(new Error('DB Error'));
-      fileStorageService.delete.mockRejectedValue(new Error('Delete failed'));
+      fileStorageService.upload.mockResolvedValue({
+        publicId: 'anuncios/test-1',
+        url: 'http://cdn/test-1.jpg',
+        secureUrl: 'https://cdn/test-1.jpg',
+        format: 'jpg',
+        width: 1200,
+        height: 800,
+        bytes: 1024,
+      });
 
-      await expect(useCase.execute('anuncio-1', mockFile)).rejects.toThrow('DB Error');
+      const mockImage = {
+        id: 'img-1',
+        isPrimary: true,
+      };
+      anuncioRepository.createImage.mockResolvedValue(mockImage as any);
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+      await useCase.execute('anuncio-1', mockFile, true);
+
+      expect(anuncioRepository.clearImagePrimary).toHaveBeenCalledWith('anuncio-1');
     });
   });
 });

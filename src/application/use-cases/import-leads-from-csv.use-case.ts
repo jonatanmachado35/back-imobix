@@ -1,6 +1,6 @@
 import { Lead, LeadStatus, InvalidLeadDataError } from '../../domain/entities/lead';
 import { LeadRepository } from '../ports/lead-repository';
-import { LeadAlreadyExistsError } from './lead-errors';
+import { LeadAlreadyExistsError } from '../../domain/entities/lead-errors';
 
 // Importação compatível com CommonJS
 const { parse } = require('csv-parse/sync');

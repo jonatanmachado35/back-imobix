@@ -1,18 +1,15 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { PropertyRepository } from '../../ports/property-repository';
+import { PROPERTY_REPOSITORY } from '../../../properties/properties.tokens';
 
 @Injectable()
 export class ListPropertyImagesUseCase {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    @Inject(PROPERTY_REPOSITORY) private readonly propertyRepository: PropertyRepository
+  ) { }
 
   async execute(propertyId: string, ownerId: string) {
-    const property = await this.prisma.property.findUnique({
-      where: { id: propertyId },
-    });
+    const property = await this.propertyRepository.findById(propertyId);
 
     if (!property) {
       throw new NotFoundException(`Property com ID ${propertyId} não encontrada`);
@@ -22,9 +19,6 @@ export class ListPropertyImagesUseCase {
       throw new ForbiddenException('You are not the owner of this property');
     }
 
-    return this.prisma.propertyImage.findMany({
-      where: { propertyId },
-      orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }, { createdAt: 'asc' }],
-    });
+    return this.propertyRepository.findImagesByPropertyId(propertyId);
   }
 }

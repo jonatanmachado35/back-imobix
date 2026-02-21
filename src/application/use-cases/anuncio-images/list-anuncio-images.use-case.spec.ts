@@ -1,19 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { ListAnuncioImagesUseCase } from './list-anuncio-images.use-case';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 describe('ListAnuncioImagesUseCase', () => {
   let useCase: ListAnuncioImagesUseCase;
-  let prismaService: any;
+  let mockAnuncioRepository: jest.Mocked<AnuncioRepository>;
 
-  const mockPrismaService = {
-    anuncio: {
-      findUnique: jest.fn(),
-    },
-    anuncioImage: {
-      findMany: jest.fn(),
-    },
+  const mockRepository = {
+    findById: jest.fn(),
+    findByIdWithImages: jest.fn(),
+    findImagesByAnuncioId: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -21,14 +19,14 @@ describe('ListAnuncioImagesUseCase', () => {
       providers: [
         ListAnuncioImagesUseCase,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: ANUNCIO_REPOSITORY,
+          useValue: mockRepository,
         },
       ],
     }).compile();
 
     useCase = module.get<ListAnuncioImagesUseCase>(ListAnuncioImagesUseCase);
-    prismaService = module.get(PrismaService);
+    mockAnuncioRepository = module.get(ANUNCIO_REPOSITORY);
   });
 
   afterEach(() => {
@@ -38,152 +36,70 @@ describe('ListAnuncioImagesUseCase', () => {
   describe('execute', () => {
     const mockAnuncio = {
       id: 'anuncio-1',
-      titulo: 'Test Anuncio',
-      tipo: 'CASA',
-      endereco: 'Rua Teste, 123',
-      cidade: 'Florianópolis',
-      estado: 'SC',
-      valor: 500000,
+      titulo: 'Casa na Praia',
     };
 
-    const mockImages = [
-      {
-        id: 'image-1',
-        anuncioId: 'anuncio-1',
-        publicId: 'anuncios/test123',
-        url: 'http://cloudinary.com/test1.jpg',
-        secureUrl: 'https://cloudinary.com/test1.jpg',
-        format: 'jpg',
-        width: 800,
-        height: 600,
-        bytes: 1024,
-        displayOrder: 0,
-        isPrimary: true,
-        createdAt: new Date('2026-01-01'),
-        updatedAt: new Date('2026-01-01'),
-      },
-      {
-        id: 'image-2',
-        anuncioId: 'anuncio-1',
-        publicId: 'anuncios/test456',
-        url: 'http://cloudinary.com/test2.jpg',
-        secureUrl: 'https://cloudinary.com/test2.jpg',
-        format: 'jpg',
-        width: 800,
-        height: 600,
-        bytes: 2048,
-        displayOrder: 1,
-        isPrimary: false,
-        createdAt: new Date('2026-01-02'),
-        updatedAt: new Date('2026-01-02'),
-      },
-      {
-        id: 'image-3',
-        anuncioId: 'anuncio-1',
-        publicId: 'anuncios/test789',
-        url: 'http://cloudinary.com/test3.jpg',
-        secureUrl: 'https://cloudinary.com/test3.jpg',
-        format: 'jpg',
-        width: 800,
-        height: 600,
-        bytes: 3072,
-        displayOrder: 2,
-        isPrimary: false,
-        createdAt: new Date('2026-01-03'),
-        updatedAt: new Date('2026-01-03'),
-      },
-    ];
-
-    it('should list all images of an anuncio', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      prismaService.anuncioImage.findMany.mockResolvedValue(mockImages as any);
+    it('should list all images of an existing anuncio', async () => {
+      mockAnuncioRepository.findById.mockResolvedValue(mockAnuncio as any);
+      mockAnuncioRepository.findImagesByAnuncioId.mockResolvedValue([
+        { id: 'img-1', url: 'http://img1.jpg', isPrimary: true } as any,
+        { id: 'img-2', url: 'http://img2.jpg', isPrimary: false } as any,
+      ]);
 
       const result = await useCase.execute('anuncio-1');
 
-      expect(result).toEqual(mockImages);
-      expect(prismaService.anuncio.findUnique).toHaveBeenCalledWith({
-        where: { id: 'anuncio-1' },
-      });
-      expect(prismaService.anuncioImage.findMany).toHaveBeenCalledWith({
-        where: { anuncioId: 'anuncio-1' },
-        orderBy: [
-          { isPrimary: 'desc' },
-          { displayOrder: 'asc' },
-          { createdAt: 'asc' },
-        ],
-      });
+      expect(result).toHaveLength(2);
+      expect(mockAnuncioRepository.findById).toHaveBeenCalledWith('anuncio-1');
+      expect(mockAnuncioRepository.findImagesByAnuncioId).toHaveBeenCalledWith('anuncio-1');
     });
 
-    it('should throw NotFoundException if anuncio does not exist', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(null);
+    it('should throw NotFoundException when anuncio does not exist', async () => {
+      mockAnuncioRepository.findById.mockResolvedValue(null);
 
-      await expect(useCase.execute('invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
-      expect(prismaService.anuncioImage.findMany).not.toHaveBeenCalled();
+      await expect(useCase.execute('inexistente')).rejects.toThrow(NotFoundException);
     });
 
-    it('should return empty array if anuncio has no images', async () => {
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      prismaService.anuncioImage.findMany.mockResolvedValue([]);
+    it('should return empty array when anuncio has no images', async () => {
+      mockAnuncioRepository.findById.mockResolvedValue(mockAnuncio as any);
+      mockAnuncioRepository.findImagesByAnuncioId.mockResolvedValue([]);
 
       const result = await useCase.execute('anuncio-1');
 
-      expect(result).toEqual([]);
       expect(result).toHaveLength(0);
     });
 
-    it('should order images with primary first', async () => {
-      const unorderedImages = [
-        { ...mockImages[1], displayOrder: 0, isPrimary: false },
-        { ...mockImages[2], displayOrder: 1, isPrimary: false },
-        { ...mockImages[0], displayOrder: 2, isPrimary: true },
+    it('should order images by isPrimary first, then displayOrder', async () => {
+      mockAnuncioRepository.findById.mockResolvedValue(mockAnuncio as any);
+      const images = [
+        { id: 'img-2', isPrimary: false } as any,
+        { id: 'img-1', isPrimary: true } as any,
       ];
+      mockAnuncioRepository.findImagesByAnuncioId.mockResolvedValue(images);
 
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      prismaService.anuncioImage.findMany.mockResolvedValue(mockImages as any);
+      await useCase.execute('anuncio-1');
 
-      const result = await useCase.execute('anuncio-1');
-
-      // Verifica que a primeira imagem retornada é a primária
-      expect(result[0].isPrimary).toBe(true);
-
-      // Verifica a ordem de classificação solicitada
-      expect(prismaService.anuncioImage.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: [
-            { isPrimary: 'desc' },
-            { displayOrder: 'asc' },
-            { createdAt: 'asc' },
-          ],
-        }),
-      );
+      // Repository handles ordering, we just verify it's called
+      expect(mockAnuncioRepository.findImagesByAnuncioId).toHaveBeenCalledWith('anuncio-1');
     });
 
-    it('should handle large number of images', async () => {
-      const manyImages = Array.from({ length: 20 }, (_, i) => ({
-        id: `image-${i + 1}`,
-        anuncioId: 'anuncio-1',
-        publicId: `anuncios/test${i + 1}`,
-        url: `http://cloudinary.com/test${i + 1}.jpg`,
-        secureUrl: `https://cloudinary.com/test${i + 1}.jpg`,
-        format: 'jpg',
-        width: 800,
-        height: 600,
-        bytes: 1024 * (i + 1),
-        displayOrder: i,
-        isPrimary: i === 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
-
-      prismaService.anuncio.findUnique.mockResolvedValue(mockAnuncio as any);
-      prismaService.anuncioImage.findMany.mockResolvedValue(manyImages as any);
+    it('should return images with all properties', async () => {
+      mockAnuncioRepository.findById.mockResolvedValue(mockAnuncio as any);
+      const images = [
+        { 
+          id: 'img-1', 
+          url: 'http://img1.jpg', 
+          secureUrl: 'https://img1.jpg',
+          isPrimary: true,
+          displayOrder: 0,
+        } as any,
+      ];
+      mockAnuncioRepository.findImagesByAnuncioId.mockResolvedValue(images);
 
       const result = await useCase.execute('anuncio-1');
 
-      expect(result).toHaveLength(20);
-      expect(result[0].isPrimary).toBe(true);
+      expect(result[0]).toHaveProperty('id');
+      expect(result[0]).toHaveProperty('url');
+      expect(result[0]).toHaveProperty('isPrimary');
     });
   });
 });

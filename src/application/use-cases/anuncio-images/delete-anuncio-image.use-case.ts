@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
 import { IFileStorageService } from '../../ports/file-storage.interface';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 /**
  * Use Case: Deletar imagem de anúncio
@@ -16,18 +17,13 @@ import { IFileStorageService } from '../../ports/file-storage.interface';
 @Injectable()
 export class DeleteAnuncioImageUseCase {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(ANUNCIO_REPOSITORY) private readonly anuncioRepository: AnuncioRepository,
     private readonly fileStorageService: IFileStorageService,
   ) {}
 
   async execute(anuncioId: string, imageId: string): Promise<void> {
     // 1. Validar que a imagem existe e pertence ao anúncio
-    const image = await this.prisma.anuncioImage.findFirst({
-      where: {
-        id: imageId,
-        anuncioId,
-      },
-    });
+    const image = await this.anuncioRepository.findImageById(imageId, anuncioId);
 
     if (!image) {
       throw new NotFoundException(
@@ -46,22 +42,14 @@ export class DeleteAnuncioImageUseCase {
     }
 
     // 3. Deletar do banco de dados
-    await this.prisma.anuncioImage.delete({
-      where: { id: imageId },
-    });
+    await this.anuncioRepository.deleteImage(imageId);
 
     // 4. Se era primária, definir outra como primária
     if (wasPrimary) {
-      const nextImage = await this.prisma.anuncioImage.findFirst({
-        where: { anuncioId },
-        orderBy: { displayOrder: 'asc' },
-      });
-
-      if (nextImage) {
-        await this.prisma.anuncioImage.update({
-          where: { id: nextImage.id },
-          data: { isPrimary: true },
-        });
+      const images = await this.anuncioRepository.findImagesByAnuncioId(anuncioId);
+      
+      if (images.length > 0) {
+        await this.anuncioRepository.setImagePrimary(images[0].id);
       }
     }
   }

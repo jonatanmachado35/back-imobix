@@ -120,7 +120,7 @@ describe('User Registration Flow (e2e)', () => {
       expect(response.body).toMatchObject({
         nome: 'João Cliente',
         email: 'joao@cliente.com',
-        userRole: 'cliente'
+        userType: 'cliente'
       });
       expect(response.body.id).toBeDefined();
       expect(response.body.createdAt).toBeDefined();
@@ -140,7 +140,7 @@ describe('User Registration Flow (e2e)', () => {
       expect(response.body).toMatchObject({
         nome: 'Maria Proprietária',
         email: 'maria@proprietaria.com',
-        userRole: 'proprietario'
+        userType: 'proprietario'
       });
     });
 
@@ -206,71 +206,6 @@ describe('User Registration Flow (e2e)', () => {
       }
 
       expect(response.status).toBe(409);
-    });
-  });
-
-  describe('POST /auth/register (Admin only)', () => {
-    it('should reject registration without authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          name: 'Unauthorized User',
-          email: 'unauth@test.com',
-          password: 'senha1234',
-          role: 'cliente'
-        })
-        .expect(401);
-    });
-
-    it('should allow admin to create user with auto-login', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/auth/register')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'Admin Created User',
-          email: 'admincreated@test.com',
-          password: 'senha1234',
-          role: 'cliente'
-        })
-        .expect(201);
-
-      expect(response.body.access_token).toBeDefined();
-      expect(response.body.user).toBeDefined();
-    });
-
-    it('should reject non-admin user trying to use /auth/register', async () => {
-      // Create regular user first
-      await request(app.getHttpServer())
-        .post('/users')
-        .send({
-          nome: 'Regular User',
-          email: 'regular@test.com',
-          password: 'senha1234',
-          userRole: 'cliente'
-        })
-        .expect(201);
-
-      // Login as regular user
-      const userLoginResponse = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({ email: 'regular@test.com', password: 'senha1234' });
-
-      if (!userLoginResponse.body.access_token) {
-        throw new Error(`User login failed: ${JSON.stringify(userLoginResponse.body)}`);
-      }
-      const userToken = userLoginResponse.body.access_token;
-
-      // Try to create user (should fail)
-      await request(app.getHttpServer())
-        .post('/auth/register')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'Forbidden User',
-          email: 'forbidden@test.com',
-          password: 'senha1234',
-          role: 'cliente'
-        })
-        .expect(403);
     });
   });
 });
