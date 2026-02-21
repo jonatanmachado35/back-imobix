@@ -1,9 +1,10 @@
 import { Property } from '../../domain/entities/property';
 import { PropertyImage } from '@prisma/client';
+import { PropertyType, PropertyCategory, PropertyStatus } from '../../domain/entities/property';
 
 export type CreatePropertyData = {
   ownerId: string;
-  type: string;
+  type: PropertyType;
   title: string;
   description?: string | null;
   price?: number | null;
@@ -24,11 +25,13 @@ export type CreatePropertyData = {
   checkInTime?: string | null;
   checkOutTime?: string | null;
   houseRules?: string[];
-  category?: string | null;
+  category?: PropertyCategory | null;
   blockedDates?: string[];
 };
 
-export type UpdatePropertyData = Partial<CreatePropertyData>;
+export type UpdatePropertyData = Partial<CreatePropertyData> & {
+  status?: PropertyStatus;
+};
 
 export type PropertyFilters = {
   type?: string;
@@ -47,7 +50,7 @@ export interface PropertyRepository {
   countByOwner(ownerId: string): Promise<number>;
   create(data: CreatePropertyData): Promise<Property>;
   update(id: string, data: UpdatePropertyData): Promise<Property>;
-  updateStatus(id: string, status: string): Promise<Property>;
+  updateStatus(id: string, status: PropertyStatus): Promise<Property>;
   delete(id: string): Promise<void>;
   hasConflictingBooking(propertyId: string, checkIn: Date, checkOut: Date): Promise<boolean>;
   
@@ -68,5 +71,5 @@ export interface PropertyRepository {
   }): Promise<PropertyImage>;
   deleteImage(imageId: string): Promise<void>;
   clearImagePrimary(propertyId: string): Promise<void>;
-  setImagePrimary(imageId: string): Promise<void>;
+  setImagePrimary(imageId: string): Promise<PropertyImage>;
 }

@@ -17,6 +17,7 @@ import { UploadPropertyImageUseCase } from '../application/use-cases/property-im
 import { DeletePropertyImageUseCase } from '../application/use-cases/property-images/delete-property-image.use-case';
 import { ListPropertyImagesUseCase } from '../application/use-cases/property-images/list-property-images.use-case';
 import { SetPrimaryPropertyImageUseCase } from '../application/use-cases/property-images/set-primary-property-image.use-case';
+import { ValidateImageFileUseCase } from '../application/use-cases/property-images/validate-image-file.use-case';
 
 @Module({
   imports: [DatabaseModule, CloudinaryModule],
@@ -58,6 +59,7 @@ import { SetPrimaryPropertyImageUseCase } from '../application/use-cases/propert
     DeletePropertyImageUseCase,
     ListPropertyImagesUseCase,
     SetPrimaryPropertyImageUseCase,
+    ValidateImageFileUseCase,
   ],
   exports: [PROPERTY_REPOSITORY],
 })

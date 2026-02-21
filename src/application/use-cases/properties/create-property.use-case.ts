@@ -1,4 +1,4 @@
-import { Property, PropertyType } from '../../../domain/entities/property';
+import { Property, PropertyType, PropertyCategory } from '../../../domain/entities/property';
 import { PropertyRepository } from '../../ports/property-repository';
 
 export class PropertyNotFoundError extends Error {
@@ -17,7 +17,7 @@ export class InvalidPropertyInputError extends Error {
 
 export interface CreatePropertyInput {
   ownerId: string;
-  type: string;
+  type: PropertyType;
   title: string;
   description?: string;
   price?: number;
@@ -38,7 +38,7 @@ export interface CreatePropertyInput {
   checkInTime?: string;
   checkOutTime?: string;
   houseRules?: string[];
-  category?: string;
+  category?: PropertyCategory;
   blockedDates?: string[];
 }
 
@@ -51,7 +51,7 @@ export class CreatePropertyUseCase {
       throw new InvalidPropertyInputError('Title is required');
     }
 
-    const propertyType = input.type as PropertyType;
+    const propertyType = input.type;
 
     if (propertyType === PropertyType.TEMPORADA) {
       if (!input.pricePerNight || input.pricePerNight <= 0) {

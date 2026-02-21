@@ -94,6 +94,7 @@ describe('Property Images E2E', () => {
         ownerId,
         type: 'TEMPORADA',
         title: 'Casa teste imagens',
+        pricePerNight: 500,
         amenities: [],
         houseRules: [],
         blockedDates: [],

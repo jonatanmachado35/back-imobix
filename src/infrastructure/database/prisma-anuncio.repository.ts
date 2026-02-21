@@ -101,8 +101,8 @@ export class PrismaAnuncioRepository implements AnuncioRepository {
     });
   }
 
-  async setImagePrimary(imageId: string): Promise<void> {
-    await this.prisma.anuncioImage.update({
+  async setImagePrimary(imageId: string): Promise<AnuncioImage> {
+    return this.prisma.anuncioImage.update({
       where: { id: imageId },
       data: { isPrimary: true },
     });

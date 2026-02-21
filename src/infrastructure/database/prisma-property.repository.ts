@@ -120,7 +120,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
     const property = await this.prisma.property.create({
       data: {
         ownerId: data.ownerId,
-        type: data.type as any,
+        type: data.type,
         title: data.title,
         description: data.description,
         price: data.price,
@@ -141,7 +141,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
         checkInTime: data.checkInTime,
         checkOutTime: data.checkOutTime,
         houseRules: data.houseRules || [],
-        category: data.category as any,
+        category: data.category,
         blockedDates: data.blockedDates || [],
       },
     });
@@ -172,17 +172,17 @@ export class PrismaPropertyRepository implements PropertyRepository {
         ...(data.checkInTime !== undefined && { checkInTime: data.checkInTime }),
         ...(data.checkOutTime !== undefined && { checkOutTime: data.checkOutTime }),
         ...(data.houseRules !== undefined && { houseRules: data.houseRules }),
-        ...(data.category !== undefined && { category: data.category as any }),
+        ...(data.category !== undefined && { category: data.category }),
         ...(data.blockedDates !== undefined && { blockedDates: data.blockedDates }),
       },
     });
     return this.toDomain(property);
   }
 
-  async updateStatus(id: string, status: string): Promise<Property> {
+  async updateStatus(id: string, status: PropertyStatus): Promise<Property> {
     const property = await this.prisma.property.update({
       where: { id },
-      data: { status: status as any },
+      data: { status },
     });
     return this.toDomain(property);
   }
@@ -263,8 +263,8 @@ export class PrismaPropertyRepository implements PropertyRepository {
     });
   }
 
-  async setImagePrimary(imageId: string): Promise<void> {
-    await this.prisma.propertyImage.update({
+  async setImagePrimary(imageId: string): Promise<PropertyImage> {
+    return this.prisma.propertyImage.update({
       where: { id: imageId },
       data: { isPrimary: true },
     });

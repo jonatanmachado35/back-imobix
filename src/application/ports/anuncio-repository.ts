@@ -29,5 +29,5 @@ export interface AnuncioRepository {
   }): Promise<AnuncioImage>;
   deleteImage(imageId: string): Promise<void>;
   clearImagePrimary(anuncioId: string): Promise<void>;
-  setImagePrimary(imageId: string): Promise<void>;
+  setImagePrimary(imageId: string): Promise<AnuncioImage>;
 }

@@ -52,6 +52,12 @@ describe('GetOrCreateConversationUseCase', () => {
       countByOwner: jest.fn(),
       delete: jest.fn(),
       hasConflictingBooking: jest.fn(),
+      findImagesByPropertyId: jest.fn(),
+      findImageById: jest.fn(),
+      createImage: jest.fn(),
+      deleteImage: jest.fn(),
+      clearImagePrimary: jest.fn(),
+      setImagePrimary: jest.fn(),
     };
 
     useCase = new GetOrCreateConversationUseCase(

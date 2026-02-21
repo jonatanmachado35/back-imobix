@@ -46,7 +46,8 @@ describe('GetUserProfileUseCase', () => {
         email: 'joao@email.com',
         phone: '11999999999',
         avatar: 'https://avatar.com/joao.jpg',
-        role: 'cliente',
+        role: 'USER',
+        userType: 'cliente',
       });
     });
   });

@@ -1,19 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SetPrimaryImageUseCase } from './set-primary-image.use-case';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { AnuncioRepository } from '../../ports/anuncio-repository';
+import { ANUNCIO_REPOSITORY } from '../../../real-estate/real-estate.tokens';
 
 describe('SetPrimaryImageUseCase', () => {
   let useCase: SetPrimaryImageUseCase;
-  let prismaService: any;
+  let mockAnuncioRepository: jest.Mocked<AnuncioRepository>;
 
-  const mockPrismaService = {
-    anuncioImage: {
-      findFirst: jest.fn(),
-      update: jest.fn(),
-      updateMany: jest.fn(),
-    },
-    $transaction: jest.fn(),
+  const mockRepository = {
+    findImageById: jest.fn(),
+    findImagesByAnuncioId: jest.fn(),
+    clearImagePrimary: jest.fn(),
+    setImagePrimary: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -21,14 +20,14 @@ describe('SetPrimaryImageUseCase', () => {
       providers: [
         SetPrimaryImageUseCase,
         {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+          provide: ANUNCIO_REPOSITORY,
+          useValue: mockRepository,
         },
       ],
     }).compile();
 
     useCase = module.get<SetPrimaryImageUseCase>(SetPrimaryImageUseCase);
-    prismaService = module.get(PrismaService);
+    mockAnuncioRepository = module.get(ANUNCIO_REPOSITORY);
   });
 
   afterEach(() => {
@@ -39,90 +38,45 @@ describe('SetPrimaryImageUseCase', () => {
     const mockImage = {
       id: 'image-1',
       anuncioId: 'anuncio-1',
-      publicId: 'anuncios/test123',
-      url: 'http://cloudinary.com/test.jpg',
-      secureUrl: 'https://cloudinary.com/test.jpg',
-      format: 'jpg',
-      width: 800,
-      height: 600,
-      bytes: 1024,
-      displayOrder: 0,
       isPrimary: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
-    it('should set image as primary successfully', async () => {
-      const updatedImage = { ...mockImage, isPrimary: true };
-
-      prismaService.anuncioImage.findFirst.mockResolvedValue(mockImage as any);
-      prismaService.$transaction.mockResolvedValue([{ count: 2 }, updatedImage]);
+    it('should set image as primary', async () => {
+      mockAnuncioRepository.findImageById.mockResolvedValue(mockImage as any);
+      mockAnuncioRepository.setImagePrimary.mockResolvedValue(undefined as any);
 
       const result = await useCase.execute('anuncio-1', 'image-1');
 
-      expect(result).toEqual(updatedImage);
-      expect(prismaService.anuncioImage.findFirst).toHaveBeenCalledWith({
-        where: {
-          id: 'image-1',
-          anuncioId: 'anuncio-1',
-        },
-      });
-      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(mockAnuncioRepository.findImageById).toHaveBeenCalledWith('image-1', 'anuncio-1');
+      expect(mockAnuncioRepository.clearImagePrimary).toHaveBeenCalledWith('anuncio-1');
+      expect(mockAnuncioRepository.setImagePrimary).toHaveBeenCalledWith('image-1');
     });
 
-    it('should throw NotFoundException if image not found', async () => {
-      prismaService.anuncioImage.findFirst.mockResolvedValue(null);
+    it('should throw NotFoundException when image does not exist', async () => {
+      mockAnuncioRepository.findImageById.mockResolvedValue(null);
 
-      await expect(useCase.execute('anuncio-1', 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
-      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      await expect(useCase.execute('anuncio-1', 'inexistente')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw NotFoundException if image belongs to different anuncio', async () => {
-      prismaService.anuncioImage.findFirst.mockResolvedValue(null);
-
-      await expect(useCase.execute('wrong-anuncio', 'image-1')).rejects.toThrow(
-        NotFoundException,
-      );
-      expect(prismaService.$transaction).not.toHaveBeenCalled();
-    });
-
-    it('should return image without changes if already primary', async () => {
+    it('should return same image if already primary', async () => {
       const primaryImage = { ...mockImage, isPrimary: true };
-
-      prismaService.anuncioImage.findFirst.mockResolvedValue(primaryImage as any);
+      mockAnuncioRepository.findImageById.mockResolvedValue(primaryImage as any);
 
       const result = await useCase.execute('anuncio-1', 'image-1');
 
       expect(result).toEqual(primaryImage);
-      expect(prismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockAnuncioRepository.clearImagePrimary).not.toHaveBeenCalled();
+      expect(mockAnuncioRepository.setImagePrimary).not.toHaveBeenCalled();
     });
 
-    it('should remove primary flag from other images when setting new primary', async () => {
-      const updatedImage = { ...mockImage, isPrimary: true };
-
-      prismaService.anuncioImage.findFirst.mockResolvedValue(mockImage as any);
-      prismaService.$transaction.mockResolvedValue([{ count: 2 }, updatedImage]);
+    it('should clear other primaries before setting new primary', async () => {
+      mockAnuncioRepository.findImageById.mockResolvedValue(mockImage as any);
+      mockAnuncioRepository.setImagePrimary.mockResolvedValue(undefined as any);
 
       await useCase.execute('anuncio-1', 'image-1');
 
-      // Verifica que a transação foi chamada
-      expect(prismaService.$transaction).toHaveBeenCalledTimes(1);
-
-      // Verifica que foi chamada com um array de 2 operações
-      const transactionArg = prismaService.$transaction.mock.calls[0][0];
-      expect(Array.isArray(transactionArg)).toBe(true);
-      expect(transactionArg).toHaveLength(2);
-    });
-
-    it('should handle transaction rollback on failure', async () => {
-      prismaService.anuncioImage.findFirst.mockResolvedValue(mockImage as any);
-      prismaService.$transaction.mockRejectedValue(new Error('Transaction failed'));
-
-      await expect(useCase.execute('anuncio-1', 'image-1')).rejects.toThrow(
-        'Transaction failed',
-      );
+      expect(mockAnuncioRepository.clearImagePrimary).toHaveBeenCalledWith('anuncio-1');
+      expect(mockAnuncioRepository.setImagePrimary).toHaveBeenCalledWith('image-1');
     });
   });
 });

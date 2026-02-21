@@ -120,7 +120,7 @@ describe('User Registration Flow (e2e)', () => {
       expect(response.body).toMatchObject({
         nome: 'João Cliente',
         email: 'joao@cliente.com',
-        userRole: 'cliente'
+        userType: 'cliente'
       });
       expect(response.body.id).toBeDefined();
       expect(response.body.createdAt).toBeDefined();
@@ -140,7 +140,7 @@ describe('User Registration Flow (e2e)', () => {
       expect(response.body).toMatchObject({
         nome: 'Maria Proprietária',
         email: 'maria@proprietaria.com',
-        userRole: 'proprietario'
+        userType: 'proprietario'
       });
     });
 
