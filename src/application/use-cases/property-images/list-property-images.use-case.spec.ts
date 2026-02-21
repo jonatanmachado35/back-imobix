@@ -1,23 +1,31 @@
-import { ListPropertyImagesUseCase } from './list-property-images.use-case';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ListPropertyImagesUseCase } from './list-property-images.use-case';
+import { PropertyRepository } from '../../ports/property-repository';
+import { PROPERTY_REPOSITORY } from '../../../properties/properties.tokens';
 
 describe('ListPropertyImagesUseCase', () => {
   let useCase: ListPropertyImagesUseCase;
-  let prisma: any;
+  let mockPropertyRepository: jest.Mocked<PropertyRepository>;
 
-  const mockPrisma = {
-    property: {
-      findUnique: jest.fn(),
-    },
-    propertyImage: {
-      findMany: jest.fn(),
-    },
+  const mockRepository = {
+    findById: jest.fn(),
+    findImagesByPropertyId: jest.fn(),
   };
 
-  beforeEach(() => {
-    prisma = mockPrisma;
-    useCase = new ListPropertyImagesUseCase(prisma as unknown as PrismaService);
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ListPropertyImagesUseCase,
+        {
+          provide: PROPERTY_REPOSITORY,
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    useCase = module.get<ListPropertyImagesUseCase>(ListPropertyImagesUseCase);
+    mockPropertyRepository = module.get(PROPERTY_REPOSITORY);
   });
 
   afterEach(() => {
@@ -25,41 +33,38 @@ describe('ListPropertyImagesUseCase', () => {
   });
 
   it('should list property images ordered by primary and displayOrder', async () => {
-    prisma.property.findUnique.mockResolvedValue({ id: 'property-1', ownerId: 'owner-1' } as never);
-    prisma.propertyImage.findMany.mockResolvedValue([
+    mockPropertyRepository.findById.mockResolvedValue({ id: 'property-1', ownerId: 'owner-1' } as any);
+    mockPropertyRepository.findImagesByPropertyId.mockResolvedValue([
       { id: 'img-primary', isPrimary: true, displayOrder: 2 },
       { id: 'img-2', isPrimary: false, displayOrder: 1 },
-    ] as never);
+    ] as any);
 
     const result = await useCase.execute('property-1', 'owner-1');
 
     expect(result).toHaveLength(2);
-    expect(prisma.propertyImage.findMany).toHaveBeenCalledWith({
-      where: { propertyId: 'property-1' },
-      orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }, { createdAt: 'asc' }],
-    });
+    expect(mockPropertyRepository.findImagesByPropertyId).toHaveBeenCalledWith('property-1');
   });
 
   it('should throw NotFoundException when property does not exist', async () => {
-    prisma.property.findUnique.mockResolvedValue(null as never);
+    mockPropertyRepository.findById.mockResolvedValue(null);
 
     await expect(useCase.execute('property-1', 'owner-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
 
-    expect(prisma.propertyImage.findMany).not.toHaveBeenCalled();
+    expect(mockPropertyRepository.findImagesByPropertyId).not.toHaveBeenCalled();
   });
 
   it('should throw ForbiddenException when user is not owner', async () => {
-    prisma.property.findUnique.mockResolvedValue({
+    mockPropertyRepository.findById.mockResolvedValue({
       id: 'property-1',
       ownerId: 'owner-2',
-    } as never);
+    } as any);
 
     await expect(useCase.execute('property-1', 'owner-1')).rejects.toBeInstanceOf(
       ForbiddenException,
     );
 
-    expect(prisma.propertyImage.findMany).not.toHaveBeenCalled();
+    expect(mockPropertyRepository.findImagesByPropertyId).not.toHaveBeenCalled();
   });
 });

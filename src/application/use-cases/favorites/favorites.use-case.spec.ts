@@ -70,7 +70,7 @@ class InMemoryPropertyRepository implements PropertyRepository {
     throw new Error('Not implemented');
   }
 
-  async updateStatus(id: string, status: string): Promise<Property> {
+  async updateStatus(id: string, status: PropertyStatus): Promise<Property> {
     throw new Error('Not implemented');
   }
 
@@ -103,8 +103,8 @@ class InMemoryPropertyRepository implements PropertyRepository {
     // noop for tests
   }
 
-  async setImagePrimary(imageId: string): Promise<void> {
-    // noop for tests
+  async setImagePrimary(imageId: string): Promise<any> {
+    return { id: imageId, isPrimary: true };
   }
 
   addProperty(property: Property): void {

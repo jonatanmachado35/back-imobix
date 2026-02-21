@@ -7,6 +7,7 @@ import { PrismaService } from '../src/infrastructure/database/prisma.service';
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  const createdTestEmails: string[] = [];
 
   beforeAll(async () => {
     const moduleFixture = await Test.createTestingModule({
@@ -18,28 +19,14 @@ describe('Auth (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
 
-    // Cleanup only specific test emails
-    if (prisma) {
-      await prisma.user.deleteMany({
-        where: {
-          OR: [
-            { email: { startsWith: 'test' } },
-            { email: { contains: '@example.com' } },
-          ]
-        }
-      }).catch(() => { });
-    }
   }, 30000);
 
   afterAll(async () => {
-    // Cleanup test data
-    if (prisma) {
+    // Cleanup only users created in this test run
+    if (prisma && createdTestEmails.length > 0) {
       await prisma.user.deleteMany({
         where: {
-          OR: [
-            { email: { startsWith: 'test' } },
-            { email: { contains: '@example.com' } },
-          ]
+          email: { in: createdTestEmails },
         }
       }).catch(() => { });
     }
@@ -50,12 +37,15 @@ describe('Auth (e2e)', () => {
 
   describe('POST /auth/login', () => {
     it('should login with valid credentials', async () => {
+      const email = `joao.${Date.now()}@example.com`;
+      createdTestEmails.push(email);
+
       // First create a user
       await request(app.getHttpServer())
         .post('/users')
         .send({
           nome: 'João Silva',
-          email: 'joao@example.com',
+          email,
           password: 'password123',
           userRole: 'cliente'
         });
@@ -63,13 +53,13 @@ describe('Auth (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
-          email: 'joao@example.com',
+          email,
           password: 'password123'
         })
         .expect(201);
 
       expect(response.body.access_token).toBeDefined();
-      expect(response.body.user.email).toBe('joao@example.com');
+      expect(response.body.user.email).toBe(email);
       expect(response.body.user.nome).toBe('João Silva');
       expect(response.body.user).not.toHaveProperty('passwordHash');
     });
@@ -85,12 +75,15 @@ describe('Auth (e2e)', () => {
     });
 
     it('should reject invalid password', async () => {
+      const email = `joao.${Date.now()}@example.com`;
+      createdTestEmails.push(email);
+
       // Create user
       await request(app.getHttpServer())
         .post('/users')
         .send({
           nome: 'João Silva',
-          email: 'joao@example.com',
+          email,
           password: 'password123',
           userRole: 'cliente'
         });
@@ -98,17 +91,19 @@ describe('Auth (e2e)', () => {
       await request(app.getHttpServer())
         .post('/auth/login')
         .send({
-          email: 'joao@example.com',
+          email,
           password: 'wrongpassword'
         })
         .expect(401);
     });
 
     it('should reject request with missing password', async () => {
+      const email = `joao.${Date.now()}@example.com`;
+      createdTestEmails.push(email);
       await request(app.getHttpServer())
         .post('/auth/login')
         .send({
-          email: 'joao@example.com'
+          email
         })
         .expect(400); // ValidationPipe returns 400 for missing required fields
     });

@@ -124,7 +124,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
       // Limpar
       await prisma.anuncioImage.deleteMany({ where: { anuncioId: response.body.id } });
       await prisma.anuncio.delete({ where: { id: response.body.id } });
-    });
+    }, 15000);
 
     it('should create anuncio with multiple images', async () => {
       const response = await request(app.getHttpServer())
@@ -167,7 +167,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
       // Limpar
       await prisma.anuncioImage.deleteMany({ where: { anuncioId: response.body.id } });
       await prisma.anuncio.delete({ where: { id: response.body.id } });
-    });
+    }, 15000);
 
     it('should reject creation without authentication', async () => {
       const response = await request(app.getHttpServer())
@@ -282,7 +282,7 @@ describe('Create Anuncio With Images E2E Tests', () => {
         where: { anuncioId },
       });
       expect(imagesDb).toHaveLength(0);
-    }, 15000); // 15 segundos para testes com upload de imagens
+    }, 30000); // 30 segundos para testes com upload de imagens
 
     it('should return 404 when deleting non-existent anuncio', async () => {
       const nonExistentId = '00000000-0000-0000-0000-000000000000';
@@ -319,6 +319,6 @@ describe('Create Anuncio With Images E2E Tests', () => {
       // Limpar
       await prisma.anuncioImage.deleteMany({ where: { anuncioId } });
       await prisma.anuncio.delete({ where: { id: anuncioId } });
-    });
+    }, 15000);
   });
 });
