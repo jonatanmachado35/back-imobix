@@ -362,3 +362,11 @@ jobs:
 ### Porta já em uso
 - Verifique o que está usando a porta: `lsof -i :3000`
 - Altere a porta no docker-compose.prod.yml se necessário
+
+
+
+lique em Add webhook
+4. Preencha:
+   - Payload URL: 
+   - Content type: application/json
+   - Events: selecione "Just the push event"

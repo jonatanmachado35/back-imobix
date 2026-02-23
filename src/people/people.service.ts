@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { PeopleRepository } from '../application/ports/people-repository';
 import { PasswordHasher } from '../application/ports/password-hasher';
 import { PASSWORD_HASHER } from '../users/users.tokens';
 import { PEOPLE_REPOSITORY } from './people.tokens';
+import { EmailAlreadyExistsError } from '../application/use-cases/user-errors';
 
 @Injectable()
 export class PeopleService {
@@ -62,21 +63,32 @@ export class PeopleService {
   }) {
     const passwordHash = await this.passwordHasher.hash(data.password);
 
-    const funcionario = await this.peopleRepository.createFuncionario({
-      userId: '',
-      cpf: data.cpf,
-      telefone: data.telefone,
-      status: data.status || 'ATIVO',
-    });
+    let funcionario;
+
+    try {
+      funcionario = await this.peopleRepository.createFuncionarioWithUser({
+        nome: data.nome,
+        email: data.email,
+        passwordHash,
+        cpf: data.cpf,
+        telefone: data.telefone,
+        status: data.status || 'ATIVO',
+      });
+    } catch (error) {
+      if (error instanceof EmailAlreadyExistsError) {
+        throw new ConflictException('Email already exists');
+      }
+      throw error;
+    }
 
     return {
       data: {
         id: funcionario.id,
-        nome: data.nome,
-        email: data.email,
+        nome: funcionario.user.nome,
+        email: funcionario.user.email,
         cpf: data.cpf,
         telefone: data.telefone,
-        role: 'USER',
+        role: funcionario.user.role,
         status: data.status || 'ATIVO',
         dataCadastro: new Date(),
         endereco: data.endereco || null,

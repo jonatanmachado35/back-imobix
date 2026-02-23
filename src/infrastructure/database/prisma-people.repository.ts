@@ -1,7 +1,9 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PeopleRepository } from '../../application/ports/people-repository';
 import { PrismaService } from '../database/prisma.service';
 import { Funcionario, Corretor, User } from '@prisma/client';
+import { EmailAlreadyExistsError } from '../../application/use-cases/user-errors';
 
 @Injectable()
 export class PrismaPeopleRepository implements PeopleRepository {
@@ -38,6 +40,48 @@ export class PrismaPeopleRepository implements PeopleRepository {
         user: true,
       },
     });
+  }
+
+  async createFuncionarioWithUser(data: {
+    nome: string;
+    email: string;
+    passwordHash: string;
+    cpf?: string;
+    telefone?: string;
+    status?: 'ATIVO' | 'INATIVO';
+  }): Promise<Funcionario & { user: User }> {
+    try {
+      return await this.prisma.$transaction(async tx => {
+        const user = await tx.user.create({
+          data: {
+            nome: data.nome,
+            email: data.email,
+            passwordHash: data.passwordHash,
+            role: 'USER',
+            userRole: 'funcionario',
+          }
+        });
+
+        const funcionario = await tx.funcionario.create({
+          data: {
+            userId: user.id,
+            cpf: data.cpf,
+            telefone: data.telefone,
+            status: data.status || 'ATIVO',
+          },
+          include: {
+            user: true,
+          }
+        });
+
+        return funcionario;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new EmailAlreadyExistsError(data.email);
+      }
+      throw error;
+    }
   }
 
   // Corretores

@@ -4,6 +4,14 @@ export interface PeopleRepository {
   // Funcionarios
   findAllFuncionarios(): Promise<(Funcionario & { user: User })[]>;
   findFuncionarioById(id: string): Promise<(Funcionario & { user: User }) | null>;
+  createFuncionarioWithUser(data: {
+    nome: string;
+    email: string;
+    passwordHash: string;
+    cpf?: string;
+    telefone?: string;
+    status?: 'ATIVO' | 'INATIVO';
+  }): Promise<Funcionario & { user: User }>
   createFuncionario(data: {
     userId: string;
     cpf?: string;
