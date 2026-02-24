@@ -40,6 +40,8 @@ describe('UploadUserAvatarUseCase', () => {
       update: jest.fn(),
       updateRefreshToken: jest.fn(),
       save: jest.fn(),
+      findAll: jest.fn(),
+      saveWithAuditLog: jest.fn(),
     } as jest.Mocked<UserRepository>;
 
     fileStorageService = {

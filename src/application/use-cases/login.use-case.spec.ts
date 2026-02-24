@@ -1,7 +1,8 @@
 import { User } from '../../domain/entities/user';
 import { PasswordHasher } from '../ports/password-hasher';
 import { TokenGenerator } from '../ports/token-generator';
-import { CreateUserData, UserRepository } from '../ports/user-repository';
+import { CreateUserData, ListUsersFilters, ListUsersResult, UserRepository } from '../ports/user-repository';
+import { UserBlockedError } from './admin/admin-errors';
 import { InvalidCredentialsError, LoginUseCase } from './login.use-case';
 
 class InMemoryUserRepository implements UserRepository {
@@ -27,7 +28,14 @@ class InMemoryUserRepository implements UserRepository {
       data.passwordHash,
       'USER',
       now,
-      now
+      now,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'ACTIVE',
     );
     this.items.push(user);
     return user;
@@ -55,6 +63,19 @@ class InMemoryUserRepository implements UserRepository {
   async findByResetToken(token: string): Promise<User | null> {
     const found = this.items.find((item) => item.resetPasswordToken === token);
     return found ?? null;
+  }
+
+  async findAll(filters: ListUsersFilters): Promise<ListUsersResult> {
+    return { data: this.items, meta: { total: this.items.length, page: 1, limit: 20, totalPages: 1 } };
+  }
+
+  async saveWithAuditLog(user: User, _auditLogData: any, _options?: any): Promise<void> {
+    await this.save(user);
+  }
+
+  // Helper for tests
+  addUser(user: User): void {
+    this.items.push(user);
   }
 }
 
@@ -162,5 +183,38 @@ describe('LoginUseCase', () => {
     });
 
     expect(result.user).not.toHaveProperty('passwordHash');
+  });
+
+  it('should reject login when user is blocked', async () => {
+    const userRepository = new InMemoryUserRepository();
+    const hasher = new FakeHasher();
+    const tokenGenerator = new FakeTokenGenerator();
+    const useCase = new LoginUseCase(userRepository, hasher, tokenGenerator);
+
+    // Create a blocked user directly
+    const blockedUser = new User(
+      'blocked-1',
+      'Maria Bloqueada',
+      'maria@example.com',
+      'hashed-password123',
+      'USER',
+      new Date(),
+      new Date(),
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'BLOCKED',
+    );
+    userRepository.addUser(blockedUser);
+
+    await expect(
+      useCase.execute({
+        email: 'maria@example.com',
+        password: 'password123'
+      })
+    ).rejects.toBeInstanceOf(UserBlockedError);
   });
 });

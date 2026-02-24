@@ -3,6 +3,7 @@ import { AppConfigModule } from './infrastructure/config/config.module';
 import { UsersModule } from './users/users.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 
 import { PeopleModule } from './people/people.module';
 import { CrmModule } from './crm/crm.module';
@@ -21,6 +22,7 @@ import { ChatModule } from './chat/chat.module';
     DatabaseModule,
     UsersModule,
     AuthModule,
+    AdminModule,
     PeopleModule,
     CrmModule,
     RealEstateModule,

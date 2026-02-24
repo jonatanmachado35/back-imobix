@@ -30,6 +30,8 @@ describe('RegisterUserUseCase', () => {
       update: jest.fn(),
       updateRefreshToken: jest.fn(),
       save: jest.fn(),
+      findAll: jest.fn(),
+      saveWithAuditLog: jest.fn(),
     };
 
     mockPasswordHasher = {

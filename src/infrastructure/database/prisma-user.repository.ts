@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { CreateUserData, UpdateUserData, UserRepository } from '../../application/ports/user-repository';
+import { CreateAuditLogData } from '../../application/ports/admin-audit-log-repository';
+import { CreateUserData, ListUsersFilters, ListUsersResult, SaveWithAuditLogOptions, UpdateUserData, UserRepository } from '../../application/ports/user-repository';
 import { EmailAlreadyExistsError } from '../../application/use-cases/user-errors';
 import { User } from '../../domain/entities/user';
 import { PrismaService } from './prisma.service';
@@ -24,6 +25,7 @@ export class PrismaUserRepository implements UserRepository {
       user.refreshToken,
       user.resetPasswordToken,
       user.resetPasswordExpiry,
+      user.status || 'ACTIVE',
     );
   }
 
@@ -57,7 +59,6 @@ export class PrismaUserRepository implements UserRepository {
       });
       return this.toDomain(user);
     } catch (error) {
-      // P2002 é o código de erro do Prisma para violação de constraint unique
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new EmailAlreadyExistsError(data.email);
       }
@@ -93,6 +94,7 @@ export class PrismaUserRepository implements UserRepository {
         email: user.email,
         passwordHash: user.passwordHash,
         role: user.role as any,
+        status: user.status as any,
         avatar: user.avatar,
         phone: user.phone,
         userRole: user.userRole,
@@ -101,5 +103,93 @@ export class PrismaUserRepository implements UserRepository {
         resetPasswordExpiry: user.resetPasswordExpiry,
       }
     });
+  }
+
+  async saveWithAuditLog(
+    user: User,
+    auditLogData: CreateAuditLogData,
+    options?: SaveWithAuditLogOptions,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Save user state
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          nome: user.nome,
+          email: user.email,
+          passwordHash: user.passwordHash,
+          role: user.role as any,
+          status: user.status as any,
+          avatar: user.avatar,
+          phone: user.phone,
+          userRole: user.userRole,
+          refreshToken: user.refreshToken,
+          resetPasswordToken: user.resetPasswordToken,
+          resetPasswordExpiry: user.resetPasswordExpiry,
+        },
+      });
+
+      // 2. Invalidate refresh token if requested (block operation - RN-02)
+      if (options?.invalidateRefreshToken) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { refreshToken: null },
+        });
+      }
+
+      // 3. Create audit log in the same transaction
+      await tx.adminAuditLog.create({
+        data: {
+          adminId: auditLogData.adminId,
+          targetUserId: auditLogData.targetUserId,
+          action: auditLogData.action as any,
+          details: auditLogData.details,
+        },
+      });
+    });
+  }
+
+  async findAll(filters: ListUsersFilters): Promise<ListUsersResult> {
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (filters.role) {
+      where.role = filters.role;
+    }
+
+    if (filters.status) {
+      const statusMap: Record<string, string> = { active: 'ACTIVE', blocked: 'BLOCKED' };
+      where.status = statusMap[filters.status] || filters.status;
+    }
+
+    if (filters.search) {
+      where.OR = [
+        { nome: { contains: filters.search, mode: 'insensitive' } },
+        { email: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data: users.map((u) => this.toDomain(u)),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

@@ -122,4 +122,157 @@ describe('User Entity', () => {
       });
     });
   });
+
+  describe('Admin Management Methods', () => {
+    const baseUser = new User(
+      'user-123',
+      'John Doe',
+      'john@example.com',
+      'hashed-password',
+      'USER',
+      new Date('2024-01-01'),
+      new Date('2024-01-01'),
+      null,
+      null,
+      'cliente',
+      null,
+      null,
+      null,
+      'ACTIVE',
+    );
+
+    describe('block()', () => {
+      it('should return a new instance with status BLOCKED', () => {
+        const blocked = baseUser.block();
+
+        expect(blocked).not.toBe(baseUser);
+        expect(blocked.status).toBe('BLOCKED');
+        expect(blocked.id).toBe(baseUser.id);
+        expect(blocked.email).toBe(baseUser.email);
+        expect(blocked.role).toBe(baseUser.role);
+      });
+
+      it('should not mutate the original instance', () => {
+        baseUser.block();
+
+        expect(baseUser.status).toBe('ACTIVE');
+      });
+    });
+
+    describe('unblock()', () => {
+      it('should return a new instance with status ACTIVE', () => {
+        const blockedUser = new User(
+          'user-123',
+          'John Doe',
+          'john@example.com',
+          'hashed-password',
+          'USER',
+          new Date('2024-01-01'),
+          new Date('2024-01-01'),
+          null,
+          null,
+          'cliente',
+          null,
+          null,
+          null,
+          'BLOCKED',
+        );
+
+        const unblocked = blockedUser.unblock();
+
+        expect(unblocked).not.toBe(blockedUser);
+        expect(unblocked.status).toBe('ACTIVE');
+        expect(unblocked.id).toBe(blockedUser.id);
+        expect(unblocked.email).toBe(blockedUser.email);
+      });
+
+      it('should not mutate the original instance', () => {
+        const blockedUser = new User(
+          'user-123',
+          'John Doe',
+          'john@example.com',
+          'hashed-password',
+          'USER',
+          new Date('2024-01-01'),
+          new Date('2024-01-01'),
+          null,
+          null,
+          'cliente',
+          null,
+          null,
+          null,
+          'BLOCKED',
+        );
+
+        blockedUser.unblock();
+
+        expect(blockedUser.status).toBe('BLOCKED');
+      });
+    });
+
+    describe('promoteToAdmin()', () => {
+      it('should return a new instance with role ADMIN', () => {
+        const promoted = baseUser.promoteToAdmin();
+
+        expect(promoted).not.toBe(baseUser);
+        expect(promoted.role).toBe('ADMIN');
+        expect(promoted.id).toBe(baseUser.id);
+        expect(promoted.email).toBe(baseUser.email);
+        expect(promoted.status).toBe(baseUser.status);
+      });
+
+      it('should not mutate the original instance', () => {
+        baseUser.promoteToAdmin();
+
+        expect(baseUser.role).toBe('USER');
+      });
+    });
+
+    describe('isBlocked', () => {
+      it('should return true when status is BLOCKED', () => {
+        const blockedUser = new User(
+          'user-123',
+          'John Doe',
+          'john@example.com',
+          'hashed-password',
+          'USER',
+          new Date('2024-01-01'),
+          new Date('2024-01-01'),
+          null,
+          null,
+          'cliente',
+          null,
+          null,
+          null,
+          'BLOCKED',
+        );
+
+        expect(blockedUser.isBlocked).toBe(true);
+      });
+
+      it('should return false when status is ACTIVE', () => {
+        expect(baseUser.isBlocked).toBe(false);
+      });
+    });
+
+    describe('isAdmin', () => {
+      it('should return true when role is ADMIN', () => {
+        const adminUser = new User(
+          'admin-123',
+          'Admin',
+          'admin@example.com',
+          'hashed-password',
+          'ADMIN',
+          new Date('2024-01-01'),
+          new Date('2024-01-01'),
+        );
+
+        expect(adminUser.isAdmin).toBe(true);
+      });
+
+      it('should return false when role is USER', () => {
+        expect(baseUser.isAdmin).toBe(false);
+      });
+    });
+  });
 });

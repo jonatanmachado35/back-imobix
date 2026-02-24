@@ -2,8 +2,12 @@ import { User } from '../../domain/entities/user';
 import {
   UserRepository,
   CreateUserData,
-  UpdateUserData
+  UpdateUserData,
+  ListUsersFilters,
+  ListUsersResult,
+  SaveWithAuditLogOptions,
 } from '../../application/ports/user-repository';
+import { CreateAuditLogData } from '../../application/ports/admin-audit-log-repository';
 
 /**
  * In-memory implementation of UserRepository for testing purposes
@@ -40,6 +44,7 @@ export class InMemoryUserRepository implements UserRepository {
       null,
       null,
       null,
+      'ACTIVE',
     );
     this.users.push(user);
     return user;
@@ -78,6 +83,7 @@ export class InMemoryUserRepository implements UserRepository {
       token,
       existingUser.resetPasswordToken,
       existingUser.resetPasswordExpiry,
+      existingUser.status,
     );
     this.users[userIndex] = updatedUser;
   }
@@ -89,6 +95,48 @@ export class InMemoryUserRepository implements UserRepository {
     } else {
       this.users[userIndex] = user;
     }
+  }
+
+  async saveWithAuditLog(
+    user: User,
+    _auditLogData: CreateAuditLogData,
+    options?: SaveWithAuditLogOptions,
+  ): Promise<void> {
+    await this.save(user);
+    if (options?.invalidateRefreshToken) {
+      await this.updateRefreshToken(user.id, null);
+    }
+  }
+
+  async findAll(filters: ListUsersFilters): Promise<ListUsersResult> {
+    let filtered = [...this.users];
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+
+    if (filters.role) {
+      filtered = filtered.filter(u => u.role === filters.role);
+    }
+
+    if (filters.status) {
+      const statusMap: Record<string, string> = { active: 'ACTIVE', blocked: 'BLOCKED' };
+      filtered = filtered.filter(u => u.status === (statusMap[filters.status!] || filters.status));
+    }
+
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        u => u.nome.toLowerCase().includes(search) || u.email.toLowerCase().includes(search),
+      );
+    }
+
+    const total = filtered.length;
+    const start = (page - 1) * limit;
+    const data = filtered.slice(start, start + limit);
+
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
+    };
   }
 
   // Helper methods for testing

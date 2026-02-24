@@ -2,6 +2,7 @@ import { User } from '../../domain/entities/user';
 import { PasswordHasher } from '../ports/password-hasher';
 import { TokenGenerator } from '../ports/token-generator';
 import { UserRepository } from '../ports/user-repository';
+import { UserBlockedError } from './admin/admin-errors';
 
 export class InvalidCredentialsError extends Error {
   constructor() {
@@ -38,6 +39,11 @@ export class LoginUseCase {
 
     if (!user) {
       throw new InvalidCredentialsError();
+    }
+
+    // Verificar bloqueio ANTES da validacao de senha (ADR)
+    if (user.isBlocked) {
+      throw new UserBlockedError();
     }
 
     // Guard: Ensure passwordHash exists (BUG-010 fix)

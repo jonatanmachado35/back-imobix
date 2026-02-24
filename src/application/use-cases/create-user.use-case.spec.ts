@@ -62,6 +62,14 @@ class InMemoryUserRepository implements UserRepository {
     const found = this.items.find((item) => item.resetPasswordToken === token);
     return found ?? null;
   }
+
+  async findAll(filters: any): Promise<any> {
+    return { users: this.items, total: this.items.length };
+  }
+
+  async saveWithAuditLog(user: User, _auditLogData: any, _options?: any): Promise<void> {
+    await this.save(user);
+  }
 }
 
 class FakeHasher implements PasswordHasher {

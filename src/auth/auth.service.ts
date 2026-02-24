@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { LoginUseCase } from '../application/use-cases/login.use-case';
@@ -6,6 +6,7 @@ import { InvalidCredentialsError } from '../application/use-cases/login.use-case
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
 import { UserNotFoundError } from '../application/use-cases/user-errors';
+import { UserBlockedError } from '../application/use-cases/admin/admin-errors';
 import { ChangePasswordUseCase } from '../application/use-cases/password/change-password.use-case';
 import { RequestPasswordResetUseCase } from '../application/use-cases/password/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../application/use-cases/password/reset-password.use-case';
@@ -40,6 +41,9 @@ export class AuthService {
     } catch (error) {
       if (error instanceof InvalidCredentialsError) {
         throw new UnauthorizedException('Invalid credentials');
+      }
+      if (error instanceof UserBlockedError) {
+        throw new ForbiddenException('Conta bloqueada. Entre em contato com o administrador.');
       }
       throw error;
     }
