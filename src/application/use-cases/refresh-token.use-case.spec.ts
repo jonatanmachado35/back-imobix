@@ -49,7 +49,7 @@ describe('RefreshTokenUseCase', () => {
       mockTokenGenerator.verifyRefreshToken.mockReturnValue({
         userId: 'user-123',
         email: 'joao@email.com',
-        role: 'cliente',
+        role: 'USER',
       });
       mockUserRepository.findById.mockResolvedValue(mockUser);
       mockTokenGenerator.generate.mockReturnValue('new-access-token');
@@ -62,6 +62,57 @@ describe('RefreshTokenUseCase', () => {
         refreshToken: 'new-refresh-token',
       });
       expect(mockUserRepository.updateRefreshToken).toHaveBeenCalledWith('user-123', 'new-refresh-token');
+    });
+
+    it('should generate token payload with system role (not userRole)', async () => {
+      mockTokenGenerator.verifyRefreshToken.mockReturnValue({
+        userId: 'user-123',
+        email: 'joao@email.com',
+        role: 'USER',
+      });
+      mockUserRepository.findById.mockResolvedValue(mockUser);
+      mockTokenGenerator.generate.mockReturnValue('new-access-token');
+      mockTokenGenerator.generateRefreshToken.mockReturnValue('new-refresh-token');
+
+      await useCase.execute('valid-refresh-token');
+
+      // tokenPayload deve usar o role de sistema (USER/ADMIN), não o userRole de negócio
+      expect(mockTokenGenerator.generate).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'USER' })
+      );
+      expect(mockTokenGenerator.generateRefreshToken).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'USER' })
+      );
+    });
+
+    it('should generate token payload with ADMIN role for admin user', async () => {
+      const adminUser = new User(
+        'admin-1',
+        'Admin Imobix',
+        'admin@imobix.com',
+        'hashed-password',
+        'ADMIN',
+        new Date(),
+        new Date(),
+        null,
+        null,
+        null, // userRole = null
+        'valid-refresh-token'
+      );
+      mockTokenGenerator.verifyRefreshToken.mockReturnValue({
+        userId: 'admin-1',
+        email: 'admin@imobix.com',
+        role: 'ADMIN',
+      });
+      mockUserRepository.findById.mockResolvedValue(adminUser);
+      mockTokenGenerator.generate.mockReturnValue('new-access-token');
+      mockTokenGenerator.generateRefreshToken.mockReturnValue('new-refresh-token');
+
+      await useCase.execute('valid-refresh-token');
+
+      expect(mockTokenGenerator.generate).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'ADMIN' })
+      );
     });
   });
 
@@ -76,7 +127,7 @@ describe('RefreshTokenUseCase', () => {
       mockTokenGenerator.verifyRefreshToken.mockReturnValue({
         userId: 'user-123',
         email: 'joao@email.com',
-        role: 'cliente',
+        role: 'USER',
       });
       mockUserRepository.findById.mockResolvedValue(null);
 
@@ -87,7 +138,7 @@ describe('RefreshTokenUseCase', () => {
       mockTokenGenerator.verifyRefreshToken.mockReturnValue({
         userId: 'user-123',
         email: 'joao@email.com',
-        role: 'cliente',
+        role: 'USER',
       });
       const userWithDifferentToken = new User(
         'user-123',

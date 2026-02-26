@@ -1,4 +1,5 @@
 import { UserRepository } from '../ports/user-repository';
+import { resolveUserType } from './login.use-case';
 
 export class UserNotFoundError extends Error {
   constructor(userId: string) {
@@ -34,7 +35,7 @@ export class GetUserProfileUseCase {
       phone: user.phone ?? null,
       avatar: user.avatar ?? null,
       role: user.role,
-      userType: user.userRole || 'cliente',
+      userType: resolveUserType(user.role, user.userRole),
     };
   }
 }

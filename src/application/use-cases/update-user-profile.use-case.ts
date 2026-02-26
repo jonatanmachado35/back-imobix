@@ -1,5 +1,6 @@
 import { UserRepository } from '../ports/user-repository';
 import { EmailAlreadyExistsError } from './user-errors';
+import { resolveUserType } from './login.use-case';
 
 export class UserNotFoundError extends Error {
   constructor(userId: string) {
@@ -58,7 +59,7 @@ export class UpdateUserProfileUseCase {
       phone: updatedUser.phone ?? null,
       avatar: updatedUser.avatar ?? null,
       role: updatedUser.role,
-      userType: updatedUser.userRole || 'cliente',
+      userType: resolveUserType(updatedUser.role, updatedUser.userRole),
     };
   }
 }

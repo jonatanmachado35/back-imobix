@@ -114,6 +114,42 @@ describe('UpdateUserProfileUseCase', () => {
       expect(result.phone).toBe('11888888888');
       expect(result.avatar).toBe('https://new-avatar.com/joao.jpg');
     });
+
+    it('should return userType "admin" when updating profile of ADMIN user', async () => {
+      const adminUser = new User(
+        'admin-1',
+        'Admin Imobix',
+        'admin@imobix.com',
+        'hashed-password',
+        'ADMIN',
+        new Date(),
+        new Date(),
+        null,
+        null,
+        null, // userRole = null
+        null
+      );
+      const updatedAdminUser = new User(
+        'admin-1',
+        'Admin Imobix Updated',
+        'admin@imobix.com',
+        'hashed-password',
+        'ADMIN',
+        new Date(),
+        new Date(),
+        null,
+        null,
+        null,
+        null
+      );
+      mockUserRepository.findById.mockResolvedValue(adminUser);
+      mockUserRepository.update.mockResolvedValue(updatedAdminUser);
+
+      const result = await useCase.execute('admin-1', { name: 'Admin Imobix Updated' });
+
+      expect(result.role).toBe('ADMIN');
+      expect(result.userType).toBe('admin');
+    });
   });
 
   describe('Error Cases', () => {

@@ -4,6 +4,7 @@ import { CreateUserUseCase } from '../../application/use-cases/create-user.use-c
 import { GetUserProfileUseCase, UserNotFoundError as GetUserNotFoundError } from '../../application/use-cases/get-user-profile.use-case';
 import { UpdateUserProfileUseCase, UserNotFoundError as UpdateUserNotFoundError } from '../../application/use-cases/update-user-profile.use-case';
 import { EmailAlreadyExistsError } from '../../application/use-cases/user-errors';
+import { resolveUserType } from '../../application/use-cases/login.use-case';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -38,7 +39,7 @@ export class UsersController {
         nome: user.nome,
         email: user.email,
         role: user.role,
-        userType: user.userRole || 'cliente',
+        userType: resolveUserType(user.role, user.userRole),
         createdAt: user.createdAt
       };
     } catch (error) {

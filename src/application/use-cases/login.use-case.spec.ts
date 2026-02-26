@@ -3,7 +3,7 @@ import { PasswordHasher } from '../ports/password-hasher';
 import { TokenGenerator } from '../ports/token-generator';
 import { CreateUserData, ListUsersFilters, ListUsersResult, UserRepository } from '../ports/user-repository';
 import { UserBlockedError } from './admin/admin-errors';
-import { InvalidCredentialsError, LoginUseCase } from './login.use-case';
+import { InvalidCredentialsError, LoginUseCase, resolveUserType } from './login.use-case';
 
 class InMemoryUserRepository implements UserRepository {
   private items: User[] = [];
@@ -185,6 +185,59 @@ describe('LoginUseCase', () => {
     expect(result.user).not.toHaveProperty('passwordHash');
   });
 
+  it('should return userType "cliente" as fallback for USER with null userRole', async () => {
+    const userRepository = new InMemoryUserRepository();
+    const hasher = new FakeHasher();
+    const tokenGenerator = new FakeTokenGenerator();
+    const useCase = new LoginUseCase(userRepository, hasher, tokenGenerator);
+
+    await userRepository.create({
+      nome: 'João Silva',
+      email: 'joao@example.com',
+      passwordHash: 'hashed-password123'
+    });
+
+    const result = await useCase.execute({
+      email: 'joao@example.com',
+      password: 'password123'
+    });
+
+    expect(result.user.userType).toBe('cliente');
+  });
+
+  it('should return userType "admin" for ADMIN role (not "cliente")', async () => {
+    const userRepository = new InMemoryUserRepository();
+    const hasher = new FakeHasher();
+    const tokenGenerator = new FakeTokenGenerator();
+    const useCase = new LoginUseCase(userRepository, hasher, tokenGenerator);
+
+    const adminUser = new User(
+      'admin-1',
+      'Admin Imobix',
+      'admin@imobix.com',
+      'hashed-password123',
+      'ADMIN',
+      new Date(),
+      new Date(),
+      null,
+      null,
+      null, // userRole = null no banco
+      null,
+      null,
+      null,
+      'ACTIVE',
+    );
+    userRepository.addUser(adminUser);
+
+    const result = await useCase.execute({
+      email: 'admin@imobix.com',
+      password: 'password123'
+    });
+
+    expect(result.user.role).toBe('ADMIN');
+    expect(result.user.userType).toBe('admin');
+  });
+
   it('should reject login when user is blocked', async () => {
     const userRepository = new InMemoryUserRepository();
     const hasher = new FakeHasher();
@@ -216,5 +269,45 @@ describe('LoginUseCase', () => {
         password: 'password123'
       })
     ).rejects.toBeInstanceOf(UserBlockedError);
+  });
+});
+
+describe('resolveUserType', () => {
+  describe('ADMIN role', () => {
+    it('should return "admin" for ADMIN role regardless of userRole', () => {
+      expect(resolveUserType('ADMIN', null)).toBe('admin');
+    });
+
+    it('should return "admin" for ADMIN even when userRole is "cliente"', () => {
+      expect(resolveUserType('ADMIN', 'cliente')).toBe('admin');
+    });
+
+    it('should return "admin" for ADMIN even when userRole is "proprietario"', () => {
+      expect(resolveUserType('ADMIN', 'proprietario')).toBe('admin');
+    });
+  });
+
+  describe('MANAGER role', () => {
+    it('should return "manager" for MANAGER role regardless of userRole', () => {
+      expect(resolveUserType('MANAGER', null)).toBe('manager');
+    });
+  });
+
+  describe('USER role', () => {
+    it('should return "cliente" as fallback when userRole is null', () => {
+      expect(resolveUserType('USER', null)).toBe('cliente');
+    });
+
+    it('should return "cliente" as fallback when userRole is undefined', () => {
+      expect(resolveUserType('USER', undefined)).toBe('cliente');
+    });
+
+    it('should return "proprietario" when userRole is "proprietario"', () => {
+      expect(resolveUserType('USER', 'proprietario')).toBe('proprietario');
+    });
+
+    it('should return "cliente" when userRole is "cliente"', () => {
+      expect(resolveUserType('USER', 'cliente')).toBe('cliente');
+    });
   });
 });

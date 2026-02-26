@@ -41,7 +41,7 @@ export class RefreshTokenUseCase {
     const tokenPayload = {
       userId: user.id,
       email: user.email,
-      role: user.userRole || 'cliente',
+      role: user.role,
     };
 
     const newAccessToken = this.tokenGenerator.generate(tokenPayload);

@@ -52,6 +52,49 @@ describe('GetUserProfileUseCase', () => {
         userType: 'cliente',
       });
     });
+
+    it('should return userType "admin" for ADMIN user with null userRole', async () => {
+      const adminUser = new User(
+        'admin-1',
+        'Admin Imobix',
+        'admin@imobix.com',
+        'hashed-password',
+        'ADMIN',
+        new Date(),
+        new Date(),
+        null,
+        null,
+        null, // userRole = null
+        null
+      );
+      mockUserRepository.findById.mockResolvedValue(adminUser);
+
+      const result = await useCase.execute('admin-1');
+
+      expect(result.role).toBe('ADMIN');
+      expect(result.userType).toBe('admin');
+    });
+
+    it('should return userType "proprietario" for USER with userRole "proprietario"', async () => {
+      const proprietarioUser = new User(
+        'user-456',
+        'Carlos Proprietário',
+        'carlos@email.com',
+        'hashed-password',
+        'USER',
+        new Date(),
+        new Date(),
+        null,
+        null,
+        'proprietario',
+        null
+      );
+      mockUserRepository.findById.mockResolvedValue(proprietarioUser);
+
+      const result = await useCase.execute('user-456');
+
+      expect(result.userType).toBe('proprietario');
+    });
   });
 
   describe('Error Cases', () => {

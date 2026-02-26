@@ -4,6 +4,18 @@ import { TokenGenerator } from '../ports/token-generator';
 import { UserRepository } from '../ports/user-repository';
 import { UserBlockedError } from './admin/admin-errors';
 
+/**
+ * Resolve o userType para o frontend.
+ * - Usuários com role diferente de 'USER' (ex: ADMIN, MANAGER) recebem o role em lowercase.
+ * - Usuários comuns recebem o userRole de negócio ('cliente', 'proprietario') ou 'cliente' como fallback.
+ */
+export function resolveUserType(role: string, userRole?: string | null): string {
+  if (role !== 'USER') {
+    return role.toLowerCase();
+  }
+  return userRole || 'cliente';
+}
+
 export class InvalidCredentialsError extends Error {
   constructor() {
     super('Invalid credentials');
@@ -74,7 +86,7 @@ export class LoginUseCase {
         nome: user.nome,
         email: user.email,
         role: user.role,
-        userType: user.userRole || 'cliente'
+        userType: resolveUserType(user.role, user.userRole)
       }
     };
   }

@@ -28,6 +28,7 @@ import {
   CannotBlockAdminError,
   CannotPromoteBlockedUserError,
 } from '../../application/use-cases/admin/admin-errors';
+import { resolveUserType } from '../../application/use-cases/login.use-case';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import {
   ListUsersResponseDto,
@@ -72,7 +73,7 @@ export class AdminController {
         nome: user.nome,
         email: user.email,
         role: user.role,
-        userRole: user.userRole || 'cliente',
+        userRole: resolveUserType(user.role, user.userRole),
         status: user.status === 'BLOCKED' ? 'blocked' : 'active',
         createdAt: user.createdAt,
       })),
