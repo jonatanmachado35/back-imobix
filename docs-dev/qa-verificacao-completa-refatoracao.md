@@ -20,13 +20,13 @@ O Dev Backend implementou as mudanças solicitadas pelo arquiteto relacionadas a
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
 | `src/application/ports/property-repository.ts` | Interface | Nova interface com métodos de imagens |
-| `src/application/ports/anuncio-repository.ts` | Interface | Nova interface com métodos de imagens |
+| `src/application/ports/anuncio-repository.ts` | Interface | (Removido) Escopo de anúncios encerrado |
 | `src/infrastructure/database/prisma-property.repository.ts` | Implementação | Repository completo com todos os métodos |
-| `src/infrastructure/database/prisma-anuncio.repository.ts` | Implementação | Repository completo com todos os métodos |
+| `src/infrastructure/database/prisma-anuncio.repository.ts` | Implementação | (Removido) Escopo de anúncios encerrado |
 | `src/properties/properties.module.ts` | Módulo | Configuração de DI com useFactory |
-| `src/real-estate/real-estate.module.ts` | Módulo | Registro do AnuncioRepository |
+| `src/real-estate/real-estate.module.ts` | Módulo | (Removido) Escopo de anúncios encerrado |
 | `src/application/use-cases/property-images/*.ts` | Use Cases | 4 use cases refatorados |
-| `src/application/use-cases/anuncio-images/*.ts` | Use Cases | 6 use cases refatorados |
+| `src/application/use-cases/anuncio-images/*.ts` | Use Cases | (Removido) Escopo de anúncios encerrado |
 
 ---
 

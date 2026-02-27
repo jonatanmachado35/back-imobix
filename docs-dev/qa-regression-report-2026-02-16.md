@@ -49,7 +49,7 @@ Time:        40.535s
 
 ✅ Domain Entities:
 - `user.spec.ts` - Todas as operações de User entity
-- `lead.spec.ts` - Todas as operações de Lead entity
+- `lead.spec.ts` - (Removido) Escopo de leads encerrado
 - `booking.spec.ts` - Todas as operações de Booking entity
 - `property.spec.ts` - Todas as operações de Property entity
 
@@ -57,7 +57,7 @@ Time:        40.535s
 - `login.use-case.spec.ts`
 - `register-user.use-case.spec.ts`
 - `refresh-token.use-case.spec.ts`
-- `create-lead.use-case.spec.ts`
+- `create-lead.use-case.spec.ts` - (Removido) Escopo de leads encerrado
 - `update-user-profile.use-case.spec.ts`
 - `upload-user-avatar.use-case.spec.ts`
 - `delete-user-avatar.use-case.spec.ts`
@@ -106,11 +106,11 @@ Error: P1001: Can't reach database server at `db.pqtqsikpyrqhjxhwhqnp.supabase.c
 **Test Suites Bloqueados:**
 1. ❌ `auth.e2e-spec.ts` - Timeout (30s) tentando conectar
 2. ❌ `users.e2e-spec.ts` - Não executado
-3. ❌ `leads.e2e-spec.ts` - Não executado
-4. ❌ `anuncio-images.e2e-spec.ts` - Não executado
+3. ❌ `leads.e2e-spec.ts` - (Removido) Escopo de leads encerrado
+4. ❌ `anuncio-images.e2e-spec.ts` - (Removido) Escopo de anúncios encerrado
 5. ❌ `user-avatar.e2e-spec.ts` - Não executado
 6. ❌ `user-registration-flow.e2e-spec.ts` - Não executado
-7. ❌ `create-anuncio-with-images.e2e-spec.ts` - Não executado
+7. ❌ `create-anuncio-with-images.e2e-spec.ts` - (Removido) Escopo de anúncios encerrado
 8. ❌ `password-management.e2e-spec.ts` - Não executado (novo)
 
 **Root Cause**: `prisma migrate deploy` falha antes mesmo de executar os testes.
@@ -290,7 +290,7 @@ Missing: 254 functions não testadas
    # Abrir: coverage/lcov-report/index.html
    ```
 2. Priorizar funções críticas:
-   - Controllers de auth, users, leads
+- Controllers de auth, users, leads (leads removido)
    - Use cases de negócio
    - Validadores de dados
 3. Meta: Atingir 80% de function coverage

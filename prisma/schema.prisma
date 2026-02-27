@@ -30,13 +30,6 @@ enum StatusFuncionario {
   INATIVO
 }
 
-enum LeadStatus {
-  NOVO
-  CONTATADO
-  QUALIFICADO
-  CONVERTIDO
-  PERDIDO
-}
 
 enum TipoPropriedade {
   CASA_PRAIA
@@ -116,7 +109,6 @@ model User {
   // Relations
   funcionario       Funcionario?
   corretor          Corretor?
-  anuncios          Anuncio[]    @relation("AnunciosCriados")
   ownedProperties   Property[]   @relation("OwnerProperties")
   bookingsAsGuest   Booking[]    @relation("GuestBookings")
   favorites         Favorite[]
@@ -192,19 +184,6 @@ model Corretor {
   updatedAt     DateTime @updatedAt
 }
 
-model Lead {
-  id          String     @id @default(cuid())
-  nome        String
-  email       String
-  telefone    String?
-  origem      String?
-  interesse   String?
-  status      LeadStatus @default(NOVO)
-  dataContato DateTime   @default(now())
-  anotacoes   String?    @db.Text
-
-  updatedAt   DateTime   @updatedAt
-}
 
 model PropriedadeTemporada {
   id                 String            @id @default(cuid())
@@ -279,55 +258,6 @@ model Visita {
   status        StatusVisita  @default(AGENDADA)
 }
 
-// Modelo para Anúncios (imobiliário geral)
-model Anuncio {
-  id              String           @id @default(cuid())
-  titulo          String
-  descricao       String?          @db.Text
-  tipo            String
-  endereco        String
-  cidade          String
-  estado          String
-  valor           Decimal          @db.Decimal(10, 2)
-  status          String           @default("ATIVO")
-  
-  // Propriedade do anúncio
-  criadoPorId     String?          // ID do usuário que criou
-  criadoPor       User?            @relation("AnunciosCriados", fields: [criadoPorId], references: [id], onDelete: SetNull)
-  
-  // Relations
-  images          AnuncioImage[]
-  
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  
-  @@index([status])
-  @@index([cidade])
-  @@index([criadoPorId])
-}
-
-model AnuncioImage {
-  id            String   @id @default(cuid())
-  anuncioId     String
-  anuncio       Anuncio  @relation(fields: [anuncioId], references: [id], onDelete: Cascade)
-  
-  publicId      String   @unique  // Cloudinary public_id
-  url           String              // URL da imagem
-  secureUrl     String              // HTTPS URL
-  format        String              // jpg, png, etc
-  width         Int?
-  height        Int?
-  bytes         Int?
-  
-  displayOrder  Int      @default(0)  // Ordem de exibição
-  isPrimary     Boolean  @default(false)  // Imagem principal
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@index([anuncioId])
-  @@index([isPrimary])
-}
 
 // ========================================
 // NOVOS MODELOS - SPRINT 1-4

@@ -374,7 +374,6 @@ src/
 
 **O projeto ja usa esse padrao em**:
 - `prisma-people.repository.ts`
-- `create-anuncio-with-images.use-case.ts`
 
 **O que fazer**: Encapsular `save()` + `auditLogRepository.create()` em uma unica transacao. Existem duas abordagens:
 - Criar um metodo no repository que receba ambas as operacoes em `$transaction`

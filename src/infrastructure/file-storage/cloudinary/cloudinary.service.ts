@@ -33,7 +33,7 @@ export class CloudinaryService implements IFileStorageService {
     this.logger.log('Cloudinary configured successfully');
   }
 
-  async upload(file: FileUploadDto, folder = 'anuncios'): Promise<UploadResult> {
+  async upload(file: FileUploadDto, folder = 'uploads'): Promise<UploadResult> {
     try {
       // Validações de aplicação
       this.validateFile(file);

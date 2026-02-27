@@ -48,7 +48,7 @@ describe('CloudinaryService', () => {
       };
 
       const mockUploadResult = {
-        public_id: 'anuncios/test123',
+        public_id: 'uploads/test123',
         url: 'http://res.cloudinary.com/test.jpg',
         secure_url: 'https://res.cloudinary.com/test.jpg',
         format: 'jpg',
@@ -66,7 +66,7 @@ describe('CloudinaryService', () => {
       const result = await service.upload(mockFile);
 
       expect(result).toEqual({
-        publicId: 'anuncios/test123',
+        publicId: 'uploads/test123',
         url: 'http://res.cloudinary.com/test.jpg',
         secureUrl: 'https://res.cloudinary.com/test.jpg',
         format: 'jpg',

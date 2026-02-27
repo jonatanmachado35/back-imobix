@@ -11,8 +11,6 @@ CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
 -- CreateEnum
 CREATE TYPE "StatusFuncionario" AS ENUM ('ATIVO', 'INATIVO');
 
--- CreateEnum
-CREATE TYPE "LeadStatus" AS ENUM ('NOVO', 'CONTATADO', 'QUALIFICADO', 'CONVERTIDO', 'PERDIDO');
 
 -- CreateEnum
 CREATE TYPE "TipoPropriedade" AS ENUM ('CASA_PRAIA', 'APARTAMENTO_PRAIA', 'SITIO', 'CHACARA', 'CASA_CAMPO', 'COBERTURA', 'OUTRO');
@@ -69,21 +67,6 @@ CREATE TABLE "Corretor" (
     CONSTRAINT "Corretor_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Lead" (
-    "id" TEXT NOT NULL,
-    "nome" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "telefone" TEXT,
-    "origem" TEXT,
-    "interesse" TEXT,
-    "status" "LeadStatus" NOT NULL DEFAULT 'NOVO',
-    "dataContato" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "anotacoes" TEXT,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Lead_pkey" PRIMARY KEY ("id")
-);
 
 -- CreateTable
 CREATE TABLE "PropriedadeTemporada" (

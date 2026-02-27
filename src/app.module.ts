@@ -6,8 +6,6 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 
 import { PeopleModule } from './people/people.module';
-import { CrmModule } from './crm/crm.module';
-import { RealEstateModule } from './real-estate/real-estate.module';
 import { FinanceModule } from './finance/finance.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { PropertiesModule } from './properties/properties.module';
@@ -24,8 +22,6 @@ import { ChatModule } from './chat/chat.module';
     AuthModule,
     AdminModule,
     PeopleModule,
-    CrmModule,
-    RealEstateModule,
     FinanceModule,
     CalendarModule,
     PropertiesModule,

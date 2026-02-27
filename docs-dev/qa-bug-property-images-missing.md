@@ -12,7 +12,7 @@
 
 O front-end tentou criar uma propriedade (Property) esperando que pudesse enviar imagens no mesmo request, mas **o backend NÃO possui implementação de upload de imagens para Properties**. 
 
-Existe apenas a implementação para **Anúncios** (diferente de Properties).
+Existia apenas a implementação para **Anúncios** (diferente de Properties). Esse escopo foi removido conforme decisão de remoção total de anúncios.
 
 ---
 
@@ -123,60 +123,15 @@ export class CreatePropertyDto {
 
 ---
 
-## 🔄 Comparação com Anúncios (Implementado)
+## 🔄 Comparação com Anúncios (Removido)
 
-O sistema JÁ TEM implementação completa para upload de imagens de **Anúncios**:
+O sistema TINHA implementação completa para upload de imagens de **Anúncios**, que foi removida conforme decisão de remoção total de anúncios:
 
-### Anúncios - ✅ COMPLETO
+### Anúncios - ❌ REMOVIDO
 
-**Controller**: [src/real-estate/anuncios.controller.ts](src/real-estate/anuncios.controller.ts)
+**Controller**: (removido) `src/real-estate/anuncios.controller.ts`
 
-```typescript
-@Controller('anuncios')
-export class AnunciosController {
-  
-  // ✅ Upload de imagem
-  @Post(':id/images')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  async uploadImage(
-    @Param('id') anuncioId: string,
-    @UploadedFile() file: Express.Multer.File
-  ) {
-    return this.uploadImageUseCase.execute(anuncioId, file);
-  }
-  
-  // ✅ Listar imagens
-  @Get(':id/images')
-  async listImages(@Param('id') anuncioId: string) {
-    return this.listImagesUseCase.execute(anuncioId);
-  }
-  
-  // ✅ Deletar imagem
-  @Delete(':id/images/:imageId')
-  async deleteImage(
-    @Param('id') anuncioId: string,
-    @Param('imageId') imageId: string
-  ) {
-    return this.deleteImageUseCase.execute(anuncioId, imageId);
-  }
-  
-  // ✅ Definir imagem principal
-  @Patch(':id/images/:imageId/primary')
-  async setPrimaryImage(
-    @Param('id') anuncioId: string,
-    @Param('imageId') imageId: string
-  ) {
-    return this.setPrimaryImageUseCase.execute(anuncioId, imageId);
-  }
-}
-```
-
-**Use Cases Implementados**:
-- ✅ [src/application/use-cases/anuncio-images/upload-anuncio-image.use-case.ts](src/application/use-cases/anuncio-images/upload-anuncio-image.use-case.ts)
-- ✅ [src/application/use-cases/anuncio-images/delete-anuncio-image.use-case.ts](src/application/use-cases/anuncio-images/delete-anuncio-image.use-case.ts)
-- ✅ [src/application/use-cases/anuncio-images/list-anuncio-images.use-case.ts](src/application/use-cases/anuncio-images/list-anuncio-images.use-case.ts)
-- ✅ [src/application/use-cases/anuncio-images/set-primary-image.use-case.ts](src/application/use-cases/anuncio-images/set-primary-image.use-case.ts)
+**Use Cases Implementados**: (removidos)
 
 ---
 

@@ -15,7 +15,7 @@ export class PropertiesController {
   ) { }
 
   @Get()
-  @ApiOperation({ summary: 'Listar imóveis', description: 'Lista imóveis ativos com filtros opcionais' })
+  @ApiOperation({ summary: 'Listar imóveis', description: 'Lista imóveis ativos. Todos os filtros são opcionais.' })
   @ApiQuery({ name: 'type', required: false, enum: ['VENDA', 'ALUGUEL', 'TEMPORADA'] })
   @ApiQuery({ name: 'city', required: false })
   @ApiQuery({ name: 'minPrice', required: false, type: Number })

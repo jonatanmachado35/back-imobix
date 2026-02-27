@@ -44,7 +44,7 @@ PATCH  /users/me            → Mantém comportamento atual (backward compatible
 - ❌ Complexidade desnecessária (FileInterceptor + DTO validation)
 - ❌ Frontend forçado a sempre usar FormData
 - ✅ **Separação de responsabilidades (SRP)**
-- ✅ **Consistência com padrão estabelecido** (ver `src/real-estate/anuncio-images.controller.ts`)
+- ✅ **Consistência com padrão estabelecido** (referência removida: escopo de anúncios encerrado)
 
 ---
 
@@ -398,11 +398,11 @@ curl -X PATCH http://localhost:3000/users/me \
 
 ## Referências no Código Existente
 
-- **Padrão similar:** [src/real-estate/anuncio-images.controller.ts](../src/real-estate/anuncio-images.controller.ts)
+- **Padrão similar:** (referência removida: escopo de anúncios encerrado)
 - **Cloudinary Service:** [src/infrastructure/file-storage/cloudinary/cloudinary.service.ts](../src/infrastructure/file-storage/cloudinary/cloudinary.service.ts)
 - **User Entity:** [src/domain/entities/user.ts](../src/domain/entities/user.ts)
 - **User Repository:** [src/infrastructure/database/prisma-user.repository.ts](../src/infrastructure/database/prisma-user.repository.ts)
-- **Testes E2E exemplo:** [test/anuncio-images.e2e-spec.ts](../test/anuncio-images.e2e-spec.ts)
+- **Testes E2E exemplo:** (referência removida: escopo de anúncios encerrado)
 
 ---
 
