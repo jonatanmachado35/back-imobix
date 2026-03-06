@@ -13,8 +13,8 @@ export class PeopleService {
   ) {}
 
   // Funcionarios
-  async findAllFuncionarios() {
-    const funcionarios = await this.peopleRepository.findAllFuncionarios();
+  async findAllFuncionarios(tenantId?: string | null) {
+    const funcionarios = await this.peopleRepository.findAllFuncionarios(tenantId);
 
     return funcionarios.map(funcionario => ({
       id: funcionario.id,
@@ -60,6 +60,8 @@ export class PeopleService {
     status?: 'ATIVO' | 'INATIVO';
     endereco?: string;
     departamento?: string;
+    /** tenantId do admin autenticado — propagado do JWT (ADR-001) */
+    tenantId?: string | null;
   }) {
     const passwordHash = await this.passwordHasher.hash(data.password);
 
@@ -73,6 +75,7 @@ export class PeopleService {
         cpf: data.cpf,
         telefone: data.telefone,
         status: data.status || 'ATIVO',
+        tenantId: data.tenantId ?? null,
       });
     } catch (error) {
       if (error instanceof EmailAlreadyExistsError) {
@@ -100,8 +103,8 @@ export class PeopleService {
   }
 
   // Corretores
-  async findAllCorretores() {
-    return this.peopleRepository.findAllCorretores();
+  async findAllCorretores(tenantId?: string | null) {
+    return this.peopleRepository.findAllCorretores(tenantId);
   }
 
   async findCorretor(id: string) {

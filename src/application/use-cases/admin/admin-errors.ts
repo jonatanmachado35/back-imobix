@@ -39,3 +39,11 @@ export class UserBlockedError extends Error {
     this.name = 'UserBlockedError';
   }
 }
+
+/** Lançado quando um ADMIN tenta agir sobre um usuário de outro tenant (ADR-001) */
+export class TenantMismatchError extends Error {
+  constructor() {
+    super('Operacao nao permitida: usuario pertence a outro tenant');
+    this.name = 'TenantMismatchError';
+  }
+}

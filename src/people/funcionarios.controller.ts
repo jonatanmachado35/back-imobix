@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, NotFoundException, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { PeopleService } from './people.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -13,11 +13,12 @@ export class FuncionariosController {
   constructor(private readonly peopleService: PeopleService) { }
 
   @Get()
-  @ApiOperation({ summary: 'Listar funcionários', description: 'Retorna lista de todos os funcionários cadastrados' })
+  @ApiOperation({ summary: 'Listar funcionários', description: 'Retorna lista de todos os funcionários cadastrados (filtrado pelo tenant do usuário autenticado)' })
   @ApiResponse({ status: 200, description: 'Lista retornada com sucesso', type: [FuncionarioResponseDto] })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findAll() {
-    return this.peopleService.findAllFuncionarios();
+  findAll(@Request() req: any) {
+    // Filtra pelo tenant do admin autenticado (ADR-001); SUPER_ADMIN (tenantId=null) vê todos
+    return this.peopleService.findAllFuncionarios(req.user.tenantId ?? null);
   }
 
   @Get(':id')
@@ -42,7 +43,11 @@ export class FuncionariosController {
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   @ApiResponse({ status: 409, description: 'Email já cadastrado' })
-  create(@Body() createFuncionarioDto: CreateFuncionarioDto) {
-    return this.peopleService.createFuncionario(createFuncionarioDto);
+  create(@Body() createFuncionarioDto: CreateFuncionarioDto, @Request() req: any) {
+    // Vincula o funcionário ao tenant do admin autenticado (ADR-001)
+    return this.peopleService.createFuncionario({
+      ...createFuncionarioDto,
+      tenantId: req.user.tenantId ?? null,
+    });
   }
 }

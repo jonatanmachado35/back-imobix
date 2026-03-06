@@ -27,6 +27,7 @@ import {
   UserNotBlockedError,
   CannotBlockAdminError,
   CannotPromoteBlockedUserError,
+  TenantMismatchError,
 } from '../../application/use-cases/admin/admin-errors';
 import { resolveUserType } from '../../application/use-cases/login.use-case';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
@@ -58,13 +59,15 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Lista de usuarios', type: ListUsersResponseDto })
   @ApiResponse({ status: 401, description: 'Nao autenticado' })
   @ApiResponse({ status: 403, description: 'Sem permissao (nao eh admin)' })
-  async listUsers(@Query() query: ListUsersQueryDto): Promise<ListUsersResponseDto> {
+  async listUsers(@Query() query: ListUsersQueryDto, @Request() req): Promise<ListUsersResponseDto> {
     const result = await this.listUsersUseCase.execute({
       page: query.page,
       limit: query.limit,
       role: query.role,
       status: query.status,
       search: query.search,
+      // SUPER_ADMIN (tenantId=null) vê todos os tenants; ADMIN vê apenas o próprio tenant (ADR-001)
+      tenantId: req.user.tenantId ?? undefined,
     });
 
     return {
@@ -101,10 +104,14 @@ export class AdminController {
       return await this.promoteToAdminUseCase.execute({
         adminId: req.user.userId,
         targetUserId: userId,
+        tenantId: req.user.tenantId ?? null,
       });
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         throw new NotFoundException('Usuario nao encontrado');
+      }
+      if (error instanceof TenantMismatchError) {
+        throw new ForbiddenException('Operacao nao permitida: usuario pertence a outro tenant');
       }
       if (error instanceof UserAlreadyAdminError) {
         throw new ConflictException('Usuario ja eh admin');
@@ -136,10 +143,14 @@ export class AdminController {
       return await this.blockUserUseCase.execute({
         adminId: req.user.userId,
         targetUserId: userId,
+        tenantId: req.user.tenantId ?? null,
       });
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         throw new NotFoundException('Usuario nao encontrado');
+      }
+      if (error instanceof TenantMismatchError) {
+        throw new ForbiddenException('Operacao nao permitida: usuario pertence a outro tenant');
       }
       if (error instanceof CannotBlockAdminError) {
         throw new UnprocessableEntityException('Nao eh possivel bloquear um admin');
@@ -170,10 +181,14 @@ export class AdminController {
       return await this.unblockUserUseCase.execute({
         adminId: req.user.userId,
         targetUserId: userId,
+        tenantId: req.user.tenantId ?? null,
       });
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         throw new NotFoundException('Usuario nao encontrado');
+      }
+      if (error instanceof TenantMismatchError) {
+        throw new ForbiddenException('Operacao nao permitida: usuario pertence a outro tenant');
       }
       if (error instanceof UserNotBlockedError) {
         throw new ConflictException('Usuario nao esta bloqueado');

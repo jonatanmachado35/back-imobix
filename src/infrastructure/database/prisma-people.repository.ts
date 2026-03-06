@@ -10,7 +10,14 @@ export class PrismaPeopleRepository implements PeopleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   // Funcionarios
-  async findAllFuncionarios(): Promise<(Funcionario & { user: User })[]> {
+  async findAllFuncionarios(tenantId?: string | null): Promise<(Funcionario & { user: User })[]> {
+    // Filtra pelo tenant do usuário vinculado, a menos que seja SUPER_ADMIN (tenantId=null) (ADR-001)
+    if (tenantId) {
+      return (this.prisma.funcionario as any).findMany({
+        where: { user: { tenantId } },
+        include: { user: true },
+      });
+    }
     return this.prisma.funcionario.findMany({ 
       include: { user: true } 
     });
@@ -49,16 +56,18 @@ export class PrismaPeopleRepository implements PeopleRepository {
     cpf?: string;
     telefone?: string;
     status?: 'ATIVO' | 'INATIVO';
+    tenantId?: string | null;
   }): Promise<Funcionario & { user: User }> {
     try {
       return await this.prisma.$transaction(async tx => {
-        const user = await tx.user.create({
+        const user = await (tx.user as any).create({
           data: {
             nome: data.nome,
             email: data.email,
             passwordHash: data.passwordHash,
             role: 'USER',
             userRole: 'funcionario',
+            tenantId: data.tenantId ?? null,
           }
         });
 
@@ -85,7 +94,13 @@ export class PrismaPeopleRepository implements PeopleRepository {
   }
 
   // Corretores
-  async findAllCorretores(): Promise<(Corretor & { user: User | null })[]> {
+  async findAllCorretores(tenantId?: string | null): Promise<(Corretor & { user: User | null })[]> {
+    if (tenantId) {
+      return (this.prisma.corretor as any).findMany({
+        where: { user: { tenantId } },
+        include: { user: true },
+      });
+    }
     return this.prisma.corretor.findMany({ include: { user: true } });
   }
 

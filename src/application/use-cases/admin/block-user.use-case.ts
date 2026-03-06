@@ -2,12 +2,15 @@ import { UserRepository } from '../../ports/user-repository';
 import { UserNotFoundError } from '../user-errors';
 import {
   CannotBlockAdminError,
+  TenantMismatchError,
   UserAlreadyBlockedError,
 } from './admin-errors';
 
 export type BlockUserInput = {
   adminId: string;
   targetUserId: string;
+  /** tenantId do admin autenticado — null apenas para SUPER_ADMIN (ADR-001) */
+  tenantId?: string | null;
 };
 
 export type BlockUserOutput = {
@@ -28,6 +31,11 @@ export class BlockUserUseCase {
 
     if (!targetUser) {
       throw new UserNotFoundError();
+    }
+
+    // Isolamento por tenant: ADMIN só bloqueia usuários do próprio tenant (ADR-001)
+    if (input.tenantId && targetUser.tenantId !== input.tenantId) {
+      throw new TenantMismatchError();
     }
 
     if (targetUser.isAdmin) {

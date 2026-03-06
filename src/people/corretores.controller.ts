@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { PeopleService } from './people.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -13,11 +13,12 @@ export class CorretoresController {
   constructor(private readonly peopleService: PeopleService) { }
 
   @Get()
-  @ApiOperation({ summary: 'Listar corretores', description: 'Retorna lista de todos os corretores cadastrados' })
+  @ApiOperation({ summary: 'Listar corretores', description: 'Retorna lista de corretores do tenant autenticado' })
   @ApiResponse({ status: 200, description: 'Lista retornada com sucesso', type: [CorretorResponseDto] })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
-  findAll() {
-    return this.peopleService.findAllCorretores();
+  findAll(@Request() req: any) {
+    // Filtra pelo tenant do admin autenticado (ADR-001); SUPER_ADMIN (tenantId=null) vê todos
+    return this.peopleService.findAllCorretores(req.user.tenantId ?? null);
   }
 
   @Get(':id')

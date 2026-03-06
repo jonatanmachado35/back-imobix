@@ -15,6 +15,7 @@ export class ListUsersUseCase {
       role: filters.role,
       status: filters.status,
       search: filters.search,
+      tenantId: filters.tenantId,
     });
   }
 }
