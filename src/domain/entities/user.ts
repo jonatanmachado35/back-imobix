@@ -1,3 +1,5 @@
+import { TEMA_DEFAULT_JSON } from '../constants/tema-default';
+
 export class User {
   constructor(
     public readonly id: string,
@@ -17,8 +19,8 @@ export class User {
     public readonly primeiroAcesso: boolean = false,
     public readonly tenantId?: string | null,
     public readonly tenantStatus?: string | null,
-    /** Tema da interface: 'light' | 'dark' | 'system' */
-    public readonly tema: string = 'light',
+    /** Tema da interface: JSON com tokens CSS ou 'light'/'dark'/'system' */
+    public readonly tema: string = TEMA_DEFAULT_JSON,
   ) { }
 
   get isBlocked(): boolean {

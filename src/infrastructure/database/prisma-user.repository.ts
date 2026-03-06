@@ -4,6 +4,7 @@ import { CreateAuditLogData } from '../../application/ports/admin-audit-log-repo
 import { CreateUserData, ListUsersFilters, ListUsersResult, SaveWithAuditLogOptions, UpdateUserData, UserRepository } from '../../application/ports/user-repository';
 import { EmailAlreadyExistsError } from '../../application/use-cases/user-errors';
 import { User } from '../../domain/entities/user';
+import { TEMA_DEFAULT_JSON } from '../../domain/constants/tema-default';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
@@ -29,7 +30,7 @@ export class PrismaUserRepository implements UserRepository {
       user.primeiroAcesso ?? false,
       user.tenantId,
       user.tenant?.status ?? null,
-      user.tema ?? 'light',
+      user.tema ?? TEMA_DEFAULT_JSON,
     );
   }
 

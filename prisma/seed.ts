@@ -1,5 +1,6 @@
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { TEMA_DEFAULT_JSON } from '../src/domain/constants/tema-default';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +24,7 @@ async function main() {
       role: Role.SUPER_ADMIN,
       tenantId: null,
       primeiroAcesso: false,
-      tema: 'light',
+      tema: TEMA_DEFAULT_JSON,
     },
   });
 
@@ -81,7 +82,7 @@ async function main() {
       role: Role.ADMIN,
       tenantId: tenant.id,
       primeiroAcesso: false,
-      tema: 'light',
+      tema: TEMA_DEFAULT_JSON,
     },
   });
 

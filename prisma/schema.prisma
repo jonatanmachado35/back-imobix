@@ -122,7 +122,7 @@ model User {
   // Primeiro acesso (onboarding para admins recém-criados via Super Admin)
   primeiroAcesso Boolean  @default(false)
 
-  // Tema da interface (persistido para sincronização entre dispositivos)
+  // Tema da interface (JSON com tokens CSS — persistido para sincronização entre dispositivos)
   tema           String   @default("light")
   
   // Password Reset
