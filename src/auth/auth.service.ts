@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
-import { LoginUseCase } from '../application/use-cases/login.use-case';
+import { LoginUseCase, TenantSuspendedError } from '../application/use-cases/login.use-case';
 import { InvalidCredentialsError } from '../application/use-cases/login.use-case';
 import { RefreshTokenUseCase } from '../application/use-cases/refresh-token.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
@@ -44,6 +44,9 @@ export class AuthService {
       }
       if (error instanceof UserBlockedError) {
         throw new ForbiddenException('Conta bloqueada. Entre em contato com o administrador.');
+      }
+      if (error instanceof TenantSuspendedError) {
+        throw new ForbiddenException('Conta suspensa. Entre em contato com o suporte.');
       }
       throw error;
     }

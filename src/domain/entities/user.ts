@@ -14,6 +14,11 @@ export class User {
     public readonly resetPasswordToken?: string | null,
     public readonly resetPasswordExpiry?: Date | null,
     public readonly status: string = 'ACTIVE',
+    public readonly primeiroAcesso: boolean = false,
+    public readonly tenantId?: string | null,
+    public readonly tenantStatus?: string | null,
+    /** Tema da interface: 'light' | 'dark' | 'system' */
+    public readonly tema: string = 'light',
   ) { }
 
   get isBlocked(): boolean {
@@ -24,7 +29,23 @@ export class User {
     return this.role === 'ADMIN';
   }
 
-  updateProfile(data: { nome?: string; email?: string; phone?: string; avatar?: string | null }): User {
+  get isSuperAdmin(): boolean {
+    return this.role === 'SUPER_ADMIN';
+  }
+
+  /** Retorna true se o tenant deste usuário estiver suspenso */
+  get isTenantSuspenso(): boolean {
+    return this.tenantStatus === 'SUSPENSO';
+  }
+
+  updateProfile(data: {
+    nome?: string;
+    email?: string;
+    phone?: string;
+    avatar?: string | null;
+    primeiroAcesso?: boolean;
+    tema?: string;
+  }): User {
     return new User(
       this.id,
       data.nome ?? this.nome,
@@ -40,6 +61,10 @@ export class User {
       this.resetPasswordToken,
       this.resetPasswordExpiry,
       this.status,
+      data.primeiroAcesso ?? this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      data.tema ?? this.tema,
     );
   }
 
@@ -59,6 +84,10 @@ export class User {
       this.resetPasswordToken,
       this.resetPasswordExpiry,
       this.status,
+      this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      this.tema,
     );
   }
 
@@ -78,6 +107,10 @@ export class User {
       token,
       expiryDate,
       this.status,
+      this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      this.tema,
     );
   }
 
@@ -97,6 +130,10 @@ export class User {
       null,
       null,
       this.status,
+      this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      this.tema,
     );
   }
 
@@ -128,6 +165,10 @@ export class User {
       this.resetPasswordToken,
       this.resetPasswordExpiry,
       'BLOCKED',
+      this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      this.tema,
     );
   }
 
@@ -147,6 +188,10 @@ export class User {
       this.resetPasswordToken,
       this.resetPasswordExpiry,
       'ACTIVE',
+      this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      this.tema,
     );
   }
 
@@ -166,6 +211,10 @@ export class User {
       this.resetPasswordToken,
       this.resetPasswordExpiry,
       this.status,
+      this.primeiroAcesso,
+      this.tenantId,
+      this.tenantStatus,
+      this.tema,
     );
   }
 }

@@ -7,6 +7,8 @@ export type CreateUserData = {
   passwordHash: string;
   role?: string;
   userRole?: string;
+  tenantId?: string;
+  primeiroAcesso?: boolean;
 };
 
 export type UpdateUserData = {
@@ -14,6 +16,9 @@ export type UpdateUserData = {
   email?: string;
   phone?: string;
   avatar?: string | null;
+  primeiroAcesso?: boolean;
+  /** Tema da interface: 'light' | 'dark' | 'system' */
+  tema?: string;
 };
 
 export type ListUsersFilters = {
@@ -22,6 +27,8 @@ export type ListUsersFilters = {
   role?: string;
   status?: string;
   search?: string;
+  /** tenantId extraído do JWT — nunca aceito como parâmetro do cliente (ADR-001) */
+  tenantId?: string | null;
 };
 
 export type ListUsersResult = {

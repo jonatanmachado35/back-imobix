@@ -42,6 +42,7 @@ export class RefreshTokenUseCase {
       userId: user.id,
       email: user.email,
       role: user.role,
+      tenantId: user.tenantId ?? null,
     };
 
     const newAccessToken = this.tokenGenerator.generate(tokenPayload);

@@ -1,0 +1,2 @@
+-- This migration was created empty and is a no-op.
+-- The actual schema changes were applied in 20260207160640_dev.

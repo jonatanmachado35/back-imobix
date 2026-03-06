@@ -4,6 +4,8 @@ import { UsersModule } from './users/users.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { ConfiguracoesModule } from './configuracoes/configuracoes.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 
 import { PeopleModule } from './people/people.module';
 import { FinanceModule } from './finance/finance.module';
@@ -21,6 +23,8 @@ import { ChatModule } from './chat/chat.module';
     UsersModule,
     AuthModule,
     AdminModule,
+    ConfiguracoesModule,
+    SuperAdminModule,
     PeopleModule,
     FinanceModule,
     CalendarModule,

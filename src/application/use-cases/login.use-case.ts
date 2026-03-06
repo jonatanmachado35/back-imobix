@@ -6,7 +6,7 @@ import { UserBlockedError } from './admin/admin-errors';
 
 /**
  * Resolve o userType para o frontend.
- * - Usuários com role diferente de 'USER' (ex: ADMIN, MANAGER) recebem o role em lowercase.
+ * - Usuários com role diferente de 'USER' (ex: ADMIN, SUPER_ADMIN) recebem o role em lowercase.
  * - Usuários comuns recebem o userRole de negócio ('cliente', 'proprietario') ou 'cliente' como fallback.
  */
 export function resolveUserType(role: string, userRole?: string | null): string {
@@ -23,6 +23,13 @@ export class InvalidCredentialsError extends Error {
   }
 }
 
+export class TenantSuspendedError extends Error {
+  constructor() {
+    super('Tenant suspenso');
+    this.name = 'TenantSuspendedError';
+  }
+}
+
 export type LoginInput = {
   email: string;
   password: string;
@@ -36,6 +43,9 @@ export type LoginOutput = {
     email: string;
     role: string;
     userType: string;
+    primeiroAcesso: boolean;
+    /** Tema da interface: 'light' | 'dark' | 'system' */
+    tema: string;
   };
 };
 
@@ -58,6 +68,11 @@ export class LoginUseCase {
       throw new UserBlockedError();
     }
 
+    // Verificar se o tenant está suspenso (ADR-001)
+    if (user.isTenantSuspenso) {
+      throw new TenantSuspendedError();
+    }
+
     // Guard: Ensure passwordHash exists (BUG-010 fix)
     if (!user.passwordHash || typeof user.passwordHash !== 'string') {
       console.error(`User ${input.email} has invalid passwordHash:`, typeof user.passwordHash);
@@ -76,7 +91,8 @@ export class LoginUseCase {
     const accessToken = this.tokenGenerator.generate({
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      tenantId: user.tenantId ?? null,
     });
 
     return {
@@ -86,7 +102,9 @@ export class LoginUseCase {
         nome: user.nome,
         email: user.email,
         role: user.role,
-        userType: resolveUserType(user.role, user.userRole)
+        userType: resolveUserType(user.role, user.userRole),
+        primeiroAcesso: user.primeiroAcesso,
+        tema: user.tema,
       }
     };
   }

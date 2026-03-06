@@ -2,6 +2,7 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
+  tenantId?: string | null;
 }
 
 export interface TokenGenerator {

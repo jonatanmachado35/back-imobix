@@ -10,7 +10,8 @@ export class JwtTokenGenerator implements TokenGenerator {
     return this.jwtService.sign({
       sub: payload.userId,
       email: payload.email,
-      role: payload.role
+      role: payload.role,
+      tenantId: payload.tenantId ?? null,
     });
   }
 
@@ -20,9 +21,10 @@ export class JwtTokenGenerator implements TokenGenerator {
         sub: payload.userId,
         email: payload.email,
         role: payload.role,
-        type: 'refresh'
+        tenantId: payload.tenantId ?? null,
+        type: 'refresh',
       },
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
   }
 
@@ -35,7 +37,8 @@ export class JwtTokenGenerator implements TokenGenerator {
       return {
         userId: decoded.sub,
         email: decoded.email,
-        role: decoded.role
+        role: decoded.role,
+        tenantId: decoded.tenantId ?? null,
       };
     } catch {
       return null;
