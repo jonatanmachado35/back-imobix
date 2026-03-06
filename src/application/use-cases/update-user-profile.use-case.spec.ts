@@ -58,7 +58,7 @@ describe('UpdateUserProfileUseCase', () => {
 
       const result = await useCase.execute('user-123', { name: 'João Novo Nome' });
 
-      expect(result.name).toBe('João Novo Nome');
+      expect(result.nome).toBe('João Novo Nome');
       expect(mockUserRepository.update).toHaveBeenCalledWith('user-123', { nome: 'João Novo Nome' });
     });
 
@@ -110,7 +110,7 @@ describe('UpdateUserProfileUseCase', () => {
         avatar: 'https://new-avatar.com/joao.jpg',
       });
 
-      expect(result.name).toBe('Nome Atualizado');
+      expect(result.nome).toBe('Nome Atualizado');
       expect(result.phone).toBe('11888888888');
       expect(result.avatar).toBe('https://new-avatar.com/joao.jpg');
     });

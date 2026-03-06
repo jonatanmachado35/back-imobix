@@ -1,8 +1,16 @@
-import { IsEmail, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateProfileDto {
-  @ApiProperty({ required: false, example: 'João Silva' })
+  /**
+   * Aceita 'nome' (padrão PT) ou 'name' (compatibilidade retroativa) — ADR-006 seção 2.2
+   */
+  @ApiProperty({ required: false, example: 'João Silva', description: 'Nome do usuário (use "nome" — campo "name" aceito por compatibilidade)' })
+  @IsOptional()
+  @IsString()
+  nome?: string;
+
+  @ApiProperty({ required: false, example: 'João Silva', description: 'Alias de "nome" para compatibilidade retroativa' })
   @IsOptional()
   @IsString()
   name?: string;
@@ -21,4 +29,24 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsUrl()
   avatar?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    example: false,
+    description: 'Marcar onboarding como concluído. Enviar false após o admin completar o primeiro acesso.' 
+  })
+  @IsOptional()
+  @IsBoolean()
+  primeiroAcesso?: boolean;
+
+  @ApiProperty({
+    required: false,
+    example: 'light',
+    description: "Tema da interface. Valores aceitos: 'light', 'dark', 'system'.",
+    enum: ['light', 'dark', 'system'],
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['light', 'dark', 'system'])
+  tema?: string;
 }

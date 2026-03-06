@@ -13,16 +13,29 @@ export class UserInfoDto {
   @ApiProperty({ 
     description: 'Permissão de sistema', 
     example: 'ADMIN', 
-    enum: ['ADMIN', 'USER'] 
+    enum: ['SUPER_ADMIN', 'ADMIN', 'USER'] 
   })
   role: string;
 
   @ApiProperty({ 
     description: 'Tipo de usuário no negócio', 
     example: 'cliente', 
-    enum: ['cliente', 'proprietario'] 
+    enum: ['cliente', 'proprietario', 'admin', 'super_admin'] 
   })
   userType: string;
+
+  @ApiProperty({ 
+    description: 'Indica se o usuário admin precisa concluir o onboarding inicial',
+    example: false 
+  })
+  primeiroAcesso: boolean;
+
+  @ApiProperty({
+    description: 'Tema da interface do usuário (sincronizado entre dispositivos)',
+    example: 'light',
+    enum: ['light', 'dark', 'system'],
+  })
+  tema: string;
 }
 
 export class LoginResponseDto {
@@ -52,14 +65,14 @@ export class UserProfileResponseDto {
   @ApiProperty({ 
     description: 'Permissão de sistema', 
     example: 'ADMIN', 
-    enum: ['ADMIN', 'USER'] 
+    enum: ['SUPER_ADMIN', 'ADMIN', 'USER'] 
   })
   role: string;
 
   @ApiProperty({ 
     description: 'Tipo de usuário no negócio', 
     example: 'cliente', 
-    enum: ['cliente', 'proprietario'] 
+    enum: ['cliente', 'proprietario', 'admin', 'super_admin'] 
   })
   userType: string;
 }

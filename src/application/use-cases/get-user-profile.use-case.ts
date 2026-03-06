@@ -16,6 +16,8 @@ export interface UserProfileOutput {
   avatar: string | null;
   role: string;
   userType: string;
+  /** Tema da interface: 'light' | 'dark' | 'system' */
+  tema: string;
 }
 
 export class GetUserProfileUseCase {
@@ -36,6 +38,7 @@ export class GetUserProfileUseCase {
       avatar: user.avatar ?? null,
       role: user.role,
       userType: resolveUserType(user.role, user.userRole),
+      tema: user.tema,
     };
   }
 }

@@ -26,36 +26,50 @@ export class PrismaUserRepository implements UserRepository {
       user.resetPasswordToken,
       user.resetPasswordExpiry,
       user.status || 'ACTIVE',
+      user.primeiroAcesso ?? false,
+      user.tenantId,
+      user.tenant?.status ?? null,
+      user.tema ?? 'light',
     );
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await (this.prisma.user as any).findUnique({
+      where: { email },
+      include: { tenant: true },
+    });
     return user ? this.toDomain(user) : null;
   }
 
   async findById(id: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await (this.prisma.user as any).findUnique({
+      where: { id },
+      include: { tenant: true },
+    });
     return user ? this.toDomain(user) : null;
   }
 
   async findByResetToken(token: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { resetPasswordToken: token }
+    const user = await (this.prisma.user as any).findUnique({
+      where: { resetPasswordToken: token },
+      include: { tenant: true },
     });
     return user ? this.toDomain(user) : null;
   }
 
   async create(data: CreateUserData): Promise<User> {
     try {
-      const user = await this.prisma.user.create({
+      const user = await (this.prisma.user as any).create({
         data: {
           nome: data.nome,
           email: data.email,
           passwordHash: data.passwordHash,
           role: data.role as any || 'USER',
           userRole: data.userRole || 'cliente',
-        }
+          tenantId: data.tenantId ?? null,
+          primeiroAcesso: data.primeiroAcesso ?? false,
+        },
+        include: { tenant: true },
       });
       return this.toDomain(user);
     } catch (error) {
@@ -67,14 +81,17 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async update(id: string, data: UpdateUserData): Promise<User> {
-    const user = await this.prisma.user.update({
+    const user = await (this.prisma.user as any).update({
       where: { id },
       data: {
         nome: data.nome,
         email: data.email,
         phone: data.phone,
         avatar: data.avatar,
-      }
+        ...(data.primeiroAcesso !== undefined && { primeiroAcesso: data.primeiroAcesso }),
+        ...(data.tema !== undefined && { tema: data.tema }),
+      },
+      include: { tenant: true },
     });
     return this.toDomain(user);
   }
@@ -87,7 +104,7 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async save(user: User): Promise<void> {
-    await this.prisma.user.update({
+    await (this.prisma.user as any).update({
       where: { id: user.id },
       data: {
         nome: user.nome,
@@ -101,6 +118,9 @@ export class PrismaUserRepository implements UserRepository {
         refreshToken: user.refreshToken,
         resetPasswordToken: user.resetPasswordToken,
         resetPasswordExpiry: user.resetPasswordExpiry,
+        primeiroAcesso: user.primeiroAcesso,
+        tenantId: user.tenantId,
+        tema: user.tema,
       }
     });
   }
@@ -112,7 +132,7 @@ export class PrismaUserRepository implements UserRepository {
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       // 1. Save user state
-      await tx.user.update({
+      await (tx.user as any).update({
         where: { id: user.id },
         data: {
           nome: user.nome,
@@ -126,12 +146,15 @@ export class PrismaUserRepository implements UserRepository {
           refreshToken: user.refreshToken,
           resetPasswordToken: user.resetPasswordToken,
           resetPasswordExpiry: user.resetPasswordExpiry,
+          primeiroAcesso: user.primeiroAcesso,
+          tenantId: user.tenantId,
+          tema: user.tema,
         },
       });
 
       // 2. Invalidate refresh token if requested (block operation - RN-02)
       if (options?.invalidateRefreshToken) {
-        await tx.user.update({
+        await (tx.user as any).update({
           where: { id: user.id },
           data: { refreshToken: null },
         });
@@ -155,6 +178,11 @@ export class PrismaUserRepository implements UserRepository {
     const skip = (page - 1) * limit;
 
     const where: any = {};
+
+    // Isolamento por tenant (ADR-001) — SUPER_ADMIN passa tenantId=null e vê todos
+    if (filters.tenantId !== undefined && filters.tenantId !== null) {
+      where.tenantId = filters.tenantId;
+    }
 
     if (filters.role) {
       where.role = filters.role;
