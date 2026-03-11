@@ -132,7 +132,7 @@ export class PrismaUserRepository implements UserRepository {
     options?: SaveWithAuditLogOptions,
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      // 1. Save user state
+      // 1. Save user state — if invalidateRefreshToken, zero it out in the same update (RN-02)
       await (tx.user as any).update({
         where: { id: user.id },
         data: {
@@ -144,7 +144,7 @@ export class PrismaUserRepository implements UserRepository {
           avatar: user.avatar,
           phone: user.phone,
           userRole: user.userRole,
-          refreshToken: user.refreshToken,
+          refreshToken: options?.invalidateRefreshToken ? null : user.refreshToken,
           resetPasswordToken: user.resetPasswordToken,
           resetPasswordExpiry: user.resetPasswordExpiry,
           primeiroAcesso: user.primeiroAcesso,
@@ -153,15 +153,7 @@ export class PrismaUserRepository implements UserRepository {
         },
       });
 
-      // 2. Invalidate refresh token if requested (block operation - RN-02)
-      if (options?.invalidateRefreshToken) {
-        await (tx.user as any).update({
-          where: { id: user.id },
-          data: { refreshToken: null },
-        });
-      }
-
-      // 3. Create audit log in the same transaction
+      // 2. Create audit log in the same transaction
       await tx.adminAuditLog.create({
         data: {
           adminId: auditLogData.adminId,
