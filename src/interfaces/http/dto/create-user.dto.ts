@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export enum UserRoleDto {
   CLIENTE = 'cliente',
   PROPRIETARIO = 'proprietario',
+  CORRETOR = 'corretor',
 }
 
 export class CreateUserDto {
@@ -23,7 +24,7 @@ export class CreateUserDto {
   @ApiProperty({
     enum: UserRoleDto,
     example: 'cliente',
-    description: 'Tipo de usuário: cliente ou proprietario'
+    description: 'Tipo de usuário: cliente, proprietario ou corretor'
   })
   @IsEnum(UserRoleDto)
   userRole: UserRoleDto;
