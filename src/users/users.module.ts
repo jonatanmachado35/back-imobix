@@ -11,12 +11,16 @@ import { PrismaUserRepository } from '../infrastructure/database/prisma-user.rep
 import { PrismaService } from '../infrastructure/database/prisma.service';
 import { BcryptHasher } from '../infrastructure/security/bcrypt-hasher.service';
 import { CloudinaryModule } from '../infrastructure/file-storage/cloudinary/cloudinary.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersController } from '../interfaces/http/users.controller';
 import { UserAvatarController } from '../interfaces/http/user-avatar.controller';
 import { PASSWORD_HASHER, USER_REPOSITORY } from './users.tokens';
+import { SavePushTokenUseCase } from '../application/use-cases/push-notifications/save-push-token.use-case';
+import { PUSH_TOKEN_REPOSITORY } from '../notifications/notifications.tokens';
+import { PushTokenRepository } from '../application/ports/push-token-repository';
 
 @Module({
-  imports: [CloudinaryModule],
+  imports: [CloudinaryModule, NotificationsModule],
   controllers: [UsersController, UserAvatarController],
   providers: [
     PrismaService,
@@ -49,7 +53,12 @@ import { PASSWORD_HASHER, USER_REPOSITORY } from './users.tokens';
       useFactory: (users: UserRepository, fileStorage: IFileStorageService) =>
         new DeleteUserAvatarUseCase(users, fileStorage),
       inject: [USER_REPOSITORY, IFileStorageService]
-    }
+    },
+    {
+      provide: SavePushTokenUseCase,
+      useFactory: (repo: PushTokenRepository) => new SavePushTokenUseCase(repo),
+      inject: [PUSH_TOKEN_REPOSITORY],
+    },
   ],
   exports: [USER_REPOSITORY, PASSWORD_HASHER]
 })

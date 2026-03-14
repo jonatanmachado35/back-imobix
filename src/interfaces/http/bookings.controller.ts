@@ -20,6 +20,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateBookingUseCase } from '../../application/use-cases/bookings/create-booking.use-case';
 import { CancelBookingUseCase } from '../../application/use-cases/bookings/cancel-booking.use-case';
 import { ListBookingsUseCase } from '../../application/use-cases/bookings/list-bookings.use-case';
+import { BookingNotificationService } from '../../notifications/booking-notification.service';
 import {
   CreateBookingDto,
   CancelBookingDto,
@@ -34,6 +35,7 @@ export class BookingsController {
     private readonly createBookingUseCase: CreateBookingUseCase,
     private readonly cancelBookingUseCase: CancelBookingUseCase,
     private readonly listBookingsUseCase: ListBookingsUseCase,
+    private readonly bookingNotificationService: BookingNotificationService,
   ) { }
 
   @Post()
@@ -58,6 +60,14 @@ export class BookingsController {
       children: dto.children,
       message: dto.message,
     });
+
+    // Notifica o proprietário sobre nova reserva (best-effort)
+    await this.bookingNotificationService.notify(
+      booking.ownerId,
+      'new_booking',
+      booking.id,
+    );
+
     return BookingMapper.toResponseDto(booking);
   }
 
@@ -93,6 +103,14 @@ export class BookingsController {
       userId: req.user.userId,
       reason: dto.reason,
     });
+
+    // Notifica o hóspede sobre cancelamento (best-effort)
+    await this.bookingNotificationService.notify(
+      booking.guestId,
+      'booking_cancelled',
+      booking.id,
+    );
+
     return BookingMapper.toResponseDto(booking);
   }
 }

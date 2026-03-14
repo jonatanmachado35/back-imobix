@@ -1,14 +1,16 @@
-import { Body, ConflictException, Controller, Get, NotFoundException, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, BadRequestException, NotFoundException, Patch, Post, Request, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { GetUserProfileUseCase, UserNotFoundError as GetUserNotFoundError } from '../../application/use-cases/get-user-profile.use-case';
 import { UpdateUserProfileUseCase, UserNotFoundError as UpdateUserNotFoundError } from '../../application/use-cases/update-user-profile.use-case';
+import { SavePushTokenUseCase, InvalidPushTokenError } from '../../application/use-cases/push-notifications/save-push-token.use-case';
 import { EmailAlreadyExistsError } from '../../application/use-cases/user-errors';
 import { resolveUserType } from '../../application/use-cases/login.use-case';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { SavePushTokenDto } from './dto/save-push-token.dto';
 
 @ApiTags('Usuários')
 @Controller('users')
@@ -16,7 +18,8 @@ export class UsersController {
   constructor(
     private readonly createUser: CreateUserUseCase,
     private readonly getUserProfile: GetUserProfileUseCase,
-    private readonly updateUserProfile: UpdateUserProfileUseCase
+    private readonly updateUserProfile: UpdateUserProfileUseCase,
+    private readonly savePushToken: SavePushTokenUseCase,
   ) { }
 
   @Post()
@@ -83,6 +86,33 @@ export class UsersController {
       }
       if (error instanceof EmailAlreadyExistsError) {
         throw new ConflictException('Email already exists');
+      }
+      throw error;
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/push-token')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Salvar push token do dispositivo',
+    description: 'Salva ou ignora (se já existir) o Expo push token do dispositivo autenticado. Suporta múltiplos dispositivos por usuário.',
+  })
+  @ApiResponse({ status: 200, description: 'Push token salvo com sucesso' })
+  @ApiResponse({ status: 400, description: 'Token inválido' })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  async savePushTokenHandler(@Request() req, @Body() dto: SavePushTokenDto) {
+    try {
+      await this.savePushToken.execute({
+        userId: req.user.userId,
+        pushToken: dto.pushToken,
+        platform: dto.platform,
+      });
+      return { message: 'Push token updated' };
+    } catch (error) {
+      if (error instanceof InvalidPushTokenError) {
+        throw new BadRequestException(error.message);
       }
       throw error;
     }

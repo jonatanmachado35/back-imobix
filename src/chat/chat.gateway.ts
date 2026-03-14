@@ -12,8 +12,11 @@ import { Logger, Inject } from '@nestjs/common';
 import { SendMessageUseCase } from '../application/use-cases/chat/send-message.use-case';
 import { ListMessagesUseCase } from '../application/use-cases/chat/list-messages.use-case';
 import { ConversationRepository } from '../application/ports/conversation-repository';
+import { PushTokenRepository } from '../application/ports/push-token-repository';
+import { PushNotificationService } from '../application/ports/push-notification.service';
 import { AuthService } from '../auth/auth.service';
 import { CONVERSATION_REPOSITORY } from './chat.tokens';
+import { PUSH_TOKEN_REPOSITORY, PUSH_NOTIFICATION_SERVICE } from '../notifications/notifications.tokens';
 
 interface AuthenticatedSocket extends Socket {
   data: {
@@ -39,6 +42,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Inject(CONVERSATION_REPOSITORY)
     private readonly conversationRepository: ConversationRepository,
     private readonly authService: AuthService,
+    @Inject(PUSH_TOKEN_REPOSITORY)
+    private readonly pushTokenRepository: PushTokenRepository,
+    @Inject(PUSH_NOTIFICATION_SERVICE)
+    private readonly pushNotificationService: PushNotificationService,
   ) { }
 
   async handleConnection(client: AuthenticatedSocket) {
@@ -116,7 +123,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (conversation) {
         const otherUserId = conversation.getOtherParticipant(userId);
 
-        // Send to the other participant
+        // Send to the other participant via WebSocket
         this.server.to(`user:${otherUserId}`).emit('message:receive', {
           id: message.id,
           conversationId: payload.conversationId,
@@ -125,6 +132,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
           text: payload.text,
           timestamp: message.createdAt.toISOString(),
         });
+
+        // Se o destinatário não está online, enviar push notification
+        const isRecipientOnline = Array.from(this.onlineUsers.values()).includes(otherUserId);
+        if (!isRecipientOnline) {
+          await this.sendChatPushNotification(
+            otherUserId,
+            payload.conversationId,
+            payload.text,
+          );
+        }
       }
 
       return {
@@ -260,5 +277,33 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     client.leave(`conversation:${payload.conversationId}`);
     return { success: true };
+  }
+
+  // ——— Helpers privados ———
+
+  private async sendChatPushNotification(
+    recipientUserId: string,
+    conversationId: string,
+    messageText: string,
+  ): Promise<void> {
+    try {
+      const tokens = await this.pushTokenRepository.findByUserId(recipientUserId);
+      if (tokens.length === 0) return;
+
+      // Trunca a mensagem para preview
+      const preview = messageText.length > 100
+        ? `${messageText.substring(0, 97)}...`
+        : messageText;
+
+      await this.pushNotificationService.sendToMany(tokens, {
+        title: 'Nova mensagem',
+        body: preview,
+        data: { conversationId, type: 'new_message' },
+        sound: 'default',
+        badge: 1,
+      });
+    } catch (error) {
+      this.logger.error(`Push notification error (chat): ${error.message}`);
+    }
   }
 }

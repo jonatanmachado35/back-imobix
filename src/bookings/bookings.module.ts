@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../infrastructure/database/database.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { BOOKING_REPOSITORY, ACTIVITY_REPOSITORY } from './bookings.tokens';
 import { PROPERTY_REPOSITORY } from '../properties/properties.tokens';
 import { PrismaBookingRepository } from '../infrastructure/database/prisma-booking.repository';
@@ -27,7 +28,7 @@ class InMemoryActivityRepository implements ActivityRepository {
 }
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, NotificationsModule],
   controllers: [BookingsController, OwnerBookingsController],
   providers: [
     PrismaService,

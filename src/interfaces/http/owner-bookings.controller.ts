@@ -19,6 +19,7 @@ import { ConfirmBookingUseCase } from '../../application/use-cases/bookings/conf
 import { CancelBookingUseCase } from '../../application/use-cases/bookings/cancel-booking.use-case';
 import { ListBookingsUseCase } from '../../application/use-cases/bookings/list-bookings.use-case';
 import { GetOwnerDashboardUseCase } from '../../application/use-cases/bookings/get-owner-dashboard.use-case';
+import { BookingNotificationService } from '../../notifications/booking-notification.service';
 import {
   BookingResponseDto,
   OwnerDashboardResponseDto,
@@ -35,6 +36,7 @@ export class OwnerBookingsController {
     private readonly cancelBookingUseCase: CancelBookingUseCase,
     private readonly listBookingsUseCase: ListBookingsUseCase,
     private readonly getOwnerDashboardUseCase: GetOwnerDashboardUseCase,
+    private readonly bookingNotificationService: BookingNotificationService,
   ) { }
 
   @Get('dashboard')
@@ -79,6 +81,14 @@ export class OwnerBookingsController {
       bookingId: id,
       ownerId: req.user.userId,
     });
+
+    // Notifica o hóspede que a reserva foi confirmada (best-effort)
+    await this.bookingNotificationService.notify(
+      booking.guestId,
+      'booking_confirmed',
+      booking.id,
+    );
+
     return BookingMapper.toResponseDto(booking);
   }
 
@@ -97,6 +107,14 @@ export class OwnerBookingsController {
       userId: req.user.userId,
       reason: 'Cancelado pelo proprietário',
     });
+
+    // Notifica o hóspede que a reserva foi cancelada (best-effort)
+    await this.bookingNotificationService.notify(
+      booking.guestId,
+      'booking_cancelled',
+      booking.id,
+    );
+
     return BookingMapper.toResponseDto(booking);
   }
 }

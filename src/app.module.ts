@@ -15,11 +15,13 @@ import { BookingsModule } from './bookings/bookings.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { ChatModule } from './chat/chat.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
     AppConfigModule,
     DatabaseModule,
+    NotificationsModule,
     UsersModule,
     AuthModule,
     AdminModule,

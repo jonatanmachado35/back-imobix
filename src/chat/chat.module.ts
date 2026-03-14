@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../infrastructure/database/database.module';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { ChatGateway } from './chat.gateway';
 import { ConversationsController } from '../interfaces/http/conversations.controller';
 import { CONVERSATION_REPOSITORY, MESSAGE_REPOSITORY } from './chat.tokens';
@@ -15,7 +16,7 @@ import { SendMessageUseCase } from '../application/use-cases/chat/send-message.u
 import { ConversationRepository } from '../application/ports/conversation-repository';
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule)],
+  imports: [DatabaseModule, forwardRef(() => AuthModule), NotificationsModule],
   controllers: [ConversationsController],
   providers: [
     // Repositories
