@@ -10,9 +10,11 @@ import { UserBlockedError } from '../application/use-cases/admin/admin-errors';
 import { ChangePasswordUseCase } from '../application/use-cases/password/change-password.use-case';
 import { RequestPasswordResetUseCase } from '../application/use-cases/password/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../application/use-cases/password/reset-password.use-case';
+import { GoogleLoginUseCase, InvalidGoogleTokenError, GoogleUserNotFoundError } from '../application/use-cases/google-login.use-case';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { InvalidCurrentPasswordError, InvalidResetTokenError, PasswordsMatchError, WeakPasswordError } from '../application/use-cases/password/password-errors';
 
 @Injectable()
@@ -24,6 +26,7 @@ export class AuthService {
     private readonly changePasswordUseCase: ChangePasswordUseCase,
     private readonly requestPasswordResetUseCase: RequestPasswordResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly googleLoginUseCase: GoogleLoginUseCase,
     private readonly jwtService: JwtService,
   ) { }
 
@@ -140,6 +143,25 @@ export class AuthService {
         throw new BadRequestException(error.message);
       }
       throw error;
+    }
+  }
+
+  async googleLogin(dto: GoogleLoginDto) {
+    try {
+      const result = await this.googleLoginUseCase.execute({ idToken: dto.idToken });
+      return {
+        user: result.user,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      };
+    } catch (error) {
+      if (error instanceof InvalidGoogleTokenError) {
+        throw new UnauthorizedException('Invalid Google token');
+      }
+      if (error instanceof GoogleUserNotFoundError) {
+        throw new NotFoundException('User not found');
+      }
+      throw new UnauthorizedException('Invalid Google token');
     }
   }
 }

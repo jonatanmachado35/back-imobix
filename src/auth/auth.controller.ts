@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
@@ -22,6 +23,20 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Credenciais inválidas' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Login com Google',
+    description: 'Autentica usuário usando o idToken gerado pelo Google Sign-In no app mobile',
+  })
+  @ApiResponse({ status: 200, description: 'Autenticado com sucesso' })
+  @ApiResponse({ status: 400, description: 'idToken ausente no body' })
+  @ApiResponse({ status: 401, description: 'Token do Google inválido ou expirado' })
+  @ApiResponse({ status: 404, description: 'Usuário não cadastrado' })
+  async googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto);
   }
 
   @Post('refresh-token')

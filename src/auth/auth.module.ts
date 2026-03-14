@@ -16,6 +16,7 @@ import { LogoutUseCase } from '../application/use-cases/logout.use-case';
 import { ChangePasswordUseCase } from '../application/use-cases/password/change-password.use-case';
 import { RequestPasswordResetUseCase } from '../application/use-cases/password/request-password-reset.use-case';
 import { ResetPasswordUseCase } from '../application/use-cases/password/reset-password.use-case';
+import { GoogleLoginUseCase, GoogleTokenInfo } from '../application/use-cases/google-login.use-case';
 import { USER_REPOSITORY } from '../users/users.tokens';
 import { PASSWORD_HASHER } from '../users/users.tokens';
 import { TOKEN_GENERATOR } from './auth.tokens';
@@ -73,6 +74,25 @@ import { UsersModule } from '../users/users.module';
       useFactory: (userRepository: UserRepository, passwordHasher: PasswordHasher) =>
         new ResetPasswordUseCase(userRepository, passwordHasher),
       inject: [USER_REPOSITORY, PASSWORD_HASHER]
+    },
+    {
+      provide: GoogleLoginUseCase,
+      useFactory: (userRepository: UserRepository, tokenGenerator: TokenGenerator) => {
+        const googleClientId = process.env.GOOGLE_CLIENT_ID ?? '';
+
+        const verifyGoogleToken = async (idToken: string): Promise<GoogleTokenInfo> => {
+          const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error('Google token verification failed');
+          }
+          const data = await response.json() as GoogleTokenInfo;
+          return data;
+        };
+
+        return new GoogleLoginUseCase(userRepository, tokenGenerator, googleClientId, verifyGoogleToken);
+      },
+      inject: [USER_REPOSITORY, TOKEN_GENERATOR],
     },
     AuthService,
     JwtStrategy,
