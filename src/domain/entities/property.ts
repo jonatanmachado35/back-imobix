@@ -30,6 +30,9 @@ export class InvalidPropertyDataError extends Error {
 export interface PropertyProps {
   id: string;
   ownerId: string;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+  ownerWhatsApp?: string | null;
   type: PropertyType;
   status: PropertyStatus;
   title: string;
@@ -85,6 +88,9 @@ export class Property {
 
   get id(): string { return this.props.id; }
   get ownerId(): string { return this.props.ownerId; }
+  get ownerName(): string | null { return this.props.ownerName ?? null; }
+  get ownerPhone(): string | null { return this.props.ownerPhone ?? null; }
+  get ownerWhatsApp(): string | null { return this.props.ownerWhatsApp ?? null; }
   get type(): PropertyType { return this.props.type; }
   get status(): PropertyStatus { return this.props.status; }
   get title(): string { return this.props.title; }
@@ -154,6 +160,9 @@ export class Property {
     return {
       id: this.id,
       ownerId: this.ownerId,
+      ownerName: this.ownerName,
+      ownerPhone: this.ownerPhone,
+      ownerWhatsApp: this.ownerWhatsApp,
       type: this.type,
       status: this.status,
       title: this.title,

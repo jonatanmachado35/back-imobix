@@ -12,6 +12,9 @@ export class PrismaPropertyRepository implements PropertyRepository {
     return new Property({
       id: data.id,
       ownerId: data.ownerId,
+      ownerName: data.owner?.nome ?? null,
+      ownerPhone: data.owner?.phone ?? null,
+      ownerWhatsApp: data.owner?.phone ?? null,
       type: data.type as PropertyType,
       status: data.status as PropertyStatus,
       title: data.title,
@@ -50,7 +53,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
   async findById(id: string): Promise<Property | null> {
     const property = await this.prisma.property.findUnique({
       where: { id },
-      include: { images: true },
+      include: { images: true, owner: true },
     });
     return property ? this.toDomain(property) : null;
   }
@@ -94,7 +97,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
 
     const properties = await this.prisma.property.findMany({
       where,
-      include: { images: true },
+      include: { images: true, owner: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -104,7 +107,7 @@ export class PrismaPropertyRepository implements PropertyRepository {
   async findByOwner(ownerId: string): Promise<Property[]> {
     const properties = await this.prisma.property.findMany({
       where: { ownerId },
-      include: { images: true },
+      include: { images: true, owner: true },
       orderBy: { createdAt: 'desc' },
     });
     return properties.map((p) => this.toDomain(p));

@@ -164,4 +164,53 @@ describe('Property Entity', () => {
       expect(property.isAvailableForBooking()).toBe(false);
     });
   });
+
+  describe('Owner Fields', () => {
+    it('should return null for ownerName when not provided', () => {
+      const property = new Property(validTemporadaProps);
+
+      expect(property.ownerName).toBeNull();
+      expect(property.ownerPhone).toBeNull();
+      expect(property.ownerWhatsApp).toBeNull();
+    });
+
+    it('should return owner fields when provided', () => {
+      const props = {
+        ...validTemporadaProps,
+        ownerName: 'João Silva',
+        ownerPhone: '+5511999999999',
+        ownerWhatsApp: '+5511999999999',
+      };
+      const property = new Property(props);
+
+      expect(property.ownerName).toBe('João Silva');
+      expect(property.ownerPhone).toBe('+5511999999999');
+      expect(property.ownerWhatsApp).toBe('+5511999999999');
+    });
+
+    it('should include owner fields in toJSON()', () => {
+      const props = {
+        ...validTemporadaProps,
+        ownerName: 'Maria Santos',
+        ownerPhone: '+5521888888888',
+        ownerWhatsApp: '+5521888888888',
+      };
+      const property = new Property(props);
+      const json = property.toJSON();
+
+      expect(json).toHaveProperty('ownerId', 'user-123');
+      expect(json).toHaveProperty('ownerName', 'Maria Santos');
+      expect(json).toHaveProperty('ownerPhone', '+5521888888888');
+      expect(json).toHaveProperty('ownerWhatsApp', '+5521888888888');
+    });
+
+    it('should include null owner fields in toJSON() when not provided', () => {
+      const property = new Property(validTemporadaProps);
+      const json = property.toJSON();
+
+      expect(json).toHaveProperty('ownerName', null);
+      expect(json).toHaveProperty('ownerPhone', null);
+      expect(json).toHaveProperty('ownerWhatsApp', null);
+    });
+  });
 });
